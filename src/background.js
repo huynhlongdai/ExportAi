@@ -28,8 +28,8 @@ const DEFAULT_PRESETS = [
   {
     id: "human_report",
     name: "Human Report",
-    description: "Readable PDF and Markdown for sharing.",
-    formats: ["pdf", "markdown"],
+    description: "Readable PDF and Word for sharing.",
+    formats: ["pdf", "word"],
     includeMeta: true,
     proRequired: false
   },
@@ -52,8 +52,8 @@ const DEFAULT_PRESETS = [
   {
     id: "full_backup",
     name: "Full Backup",
-    description: "Markdown, JSON, PDF, HTML, and assets metadata.",
-    formats: ["markdown", "json", "pdf", "html"],
+    description: "Markdown, JSON, Word, PDF, HTML, and assets metadata.",
+    formats: ["markdown", "json", "word", "pdf", "html"],
     includeMeta: true,
     proRequired: true
   }
@@ -1141,7 +1141,7 @@ function compactConversation(conversation) {
 }
 
 function normalizeArchiveFormats(formats) {
-  const textFormats = new Set(["markdown", "json", "txt", "csv", "tsv", "jsonl", "html"]);
+  const textFormats = new Set(["markdown", "json", "txt", "csv", "tsv", "jsonl", "html", "word"]);
   const normalized = (formats || []).filter((format) => textFormats.has(format));
   return normalized.length ? normalized : ["markdown"];
 }
@@ -1182,10 +1182,26 @@ function renderArchiveTextExport(conversation, format, includeSignature) {
       text: archiveToHtml(conversation, includeSignature),
       mime: "text/html",
       extension: "html"
+    }),
+    word: () => ({
+      text: archiveToWord(conversation, includeSignature),
+      mime: "application/msword",
+      extension: "doc"
     })
   };
 
   return (renderers[format] || renderers.markdown)();
+}
+
+function archiveToWord(conversation, includeSignature) {
+  return archiveToHtml(conversation, includeSignature)
+    .replace("<html lang=\"vi\">", '<html lang="vi" xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word">')
+    .replace(
+      "<head>",
+      `<head>
+  <meta name="ProgId" content="Word.Document">
+  <meta name="Generator" content="ExportAI">`
+    );
 }
 
 function archiveToMarkdown(conversation, includeSignature) {
@@ -1418,8 +1434,43 @@ function renderParagraphHtml(text) {
   if (!clean) return "";
   return clean
     .split(/\n{2,}/)
-    .map((paragraph) => `<p>${renderInlineMarkdownHtml(paragraph)}</p>`)
+    .map(renderMarkdownBlockHtml)
     .join("");
+}
+
+function renderMarkdownBlockHtml(block) {
+  const lines = block.split("\n").map((line) => line.trim()).filter(Boolean);
+  if (!lines.length) return "";
+
+  const heading = lines.length === 1 ? lines[0].match(/^(#{1,6})\s+(.+)$/) : null;
+  if (heading) {
+    const level = heading[1].length;
+    return `<h${level}>${renderInlineMarkdownHtml(heading[2])}</h${level}>`;
+  }
+
+  if (lines.every((line) => /^[-*]\s+/.test(line))) {
+    return `<ul>${lines.map((line) => `<li>${renderInlineMarkdownHtml(line.replace(/^[-*]\s+/, ""))}</li>`).join("")}</ul>`;
+  }
+
+  if (lines.every((line) => /^\d+\.\s+/.test(line))) {
+    return `<ol>${lines.map((line) => `<li>${renderInlineMarkdownHtml(line.replace(/^\d+\.\s+/, ""))}</li>`).join("")}</ol>`;
+  }
+
+  if (lines.every((line) => /^>\s?/.test(line))) {
+    return `<blockquote>${lines.map((line) => renderInlineMarkdownHtml(line.replace(/^>\s?/, ""))).join("<br>")}</blockquote>`;
+  }
+
+  if (lines.length >= 2 && lines[0].startsWith("|") && /^\|\s*:?-{3,}:?\s*(\|\s*:?-{3,}:?\s*)+\|?$/.test(lines[1])) {
+    const rows = lines
+      .filter((line, index) => index !== 1)
+      .map((line) => line.replace(/^\||\|$/g, "").split("|").map((cell) => cell.trim()));
+    const [header, ...body] = rows;
+    return `<table><thead><tr>${header.map((cell) => `<th>${renderInlineMarkdownHtml(cell)}</th>`).join("")}</tr></thead><tbody>${body
+      .map((row) => `<tr>${row.map((cell) => `<td>${renderInlineMarkdownHtml(cell)}</td>`).join("")}</tr>`)
+      .join("")}</tbody></table>`;
+  }
+
+  return `<p>${renderInlineMarkdownHtml(block)}</p>`;
 }
 
 function renderInlineMarkdownHtml(text) {
@@ -1582,7 +1633,8 @@ function normalizeFormats(formats) {
     "csv",
     "tsv",
     "jsonl",
-    "html"
+    "html",
+    "word"
   ]);
   const normalized = (formats || ["markdown"]).filter((format) => allowed.has(format));
   return normalized.length ? normalized : ["markdown"];

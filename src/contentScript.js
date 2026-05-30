@@ -11,7 +11,8 @@ const EXPORT_FORMATS = [
   { id: "csv", label: "CSV" },
   { id: "tsv", label: "TSV" },
   { id: "jsonl", label: "JL" },
-  { id: "html", label: "HTML" }
+  { id: "html", label: "HTML" },
+  { id: "word", label: "DOC" }
 ];
 
 let floatingRoot;
@@ -605,9 +606,22 @@ function domToMarkdown(node) {
     return `\n\n${"#".repeat(level)} ${cleanText(children)}\n\n`;
   }
 
-  if (tag === "li") return `\n- ${cleanText(children)}`;
+  if (tag === "li") {
+    const parent = element.parentElement;
+    if (parent?.tagName?.toLowerCase() === "ol") {
+      const index = [...parent.children].filter((child) => child.tagName.toLowerCase() === "li").indexOf(element) + 1;
+      return `\n${index}. ${cleanText(children)}`;
+    }
+    return `\n- ${cleanText(children)}`;
+  }
   if (tag === "p") return `\n\n${children}\n\n`;
-  if (["div", "section", "article", "main", "blockquote", "ul", "ol"].includes(tag)) {
+  if (tag === "blockquote") {
+    return `\n\n${cleanText(children)
+      .split("\n")
+      .map((line) => `> ${line}`)
+      .join("\n")}\n\n`;
+  }
+  if (["div", "section", "article", "main", "ul", "ol"].includes(tag)) {
     return `\n${children}\n`;
   }
 
@@ -831,6 +845,24 @@ function inferRole(node, index, platform) {
       };
     }
   }
+  if (platform.id === "perplexity") {
+    if (/query|question|prompt|user/i.test(roleContext)) {
+      return {
+        role: "user",
+        confidence: 0.82,
+        source: "perplexity-class",
+        reason: "Perplexity class/test id matched user query hint."
+      };
+    }
+    if (/answer|response|assistant|prose/i.test(roleContext)) {
+      return {
+        role: "assistant",
+        confidence: 0.82,
+        source: "perplexity-class",
+        reason: "Perplexity class/test id matched answer hint."
+      };
+    }
+  }
 
   return {
     role: index % 2 === 0 ? "user" : "assistant",
@@ -950,11 +982,27 @@ function renderTextExport(conversation, format, includeSignature) {
       text: toHtmlDocument(conversation, includeSignature),
       mime: "text/html",
       extension: "html"
+    }),
+    word: () => ({
+      text: toWordDocument(conversation, includeSignature),
+      mime: "application/msword",
+      extension: "doc"
     })
   };
 
   const renderer = renderers[format] || renderers.markdown;
   return renderer();
+}
+
+function toWordDocument(conversation, includeSignature) {
+  return toHtmlDocument(conversation, includeSignature)
+    .replace("<html lang=\"vi\">", '<html lang="vi" xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word">')
+    .replace(
+      "<head>",
+      `<head>
+  <meta name="ProgId" content="Word.Document">
+  <meta name="Generator" content="ExportAI">`
+    );
 }
 
 function toPlainText(conversation, includeSignature) {
@@ -1832,8 +1880,43 @@ function renderParagraphHtml(text) {
 
   return clean
     .split(/\n{2,}/)
-    .map((paragraph) => `<p>${renderInlineMarkdownHtml(paragraph)}</p>`)
+    .map(renderMarkdownBlockHtml)
     .join("");
+}
+
+function renderMarkdownBlockHtml(block) {
+  const lines = block.split("\n").map((line) => line.trim()).filter(Boolean);
+  if (!lines.length) return "";
+
+  const heading = lines.length === 1 ? lines[0].match(/^(#{1,6})\s+(.+)$/) : null;
+  if (heading) {
+    const level = heading[1].length;
+    return `<h${level}>${renderInlineMarkdownHtml(heading[2])}</h${level}>`;
+  }
+
+  if (lines.every((line) => /^[-*]\s+/.test(line))) {
+    return `<ul>${lines.map((line) => `<li>${renderInlineMarkdownHtml(line.replace(/^[-*]\s+/, ""))}</li>`).join("")}</ul>`;
+  }
+
+  if (lines.every((line) => /^\d+\.\s+/.test(line))) {
+    return `<ol>${lines.map((line) => `<li>${renderInlineMarkdownHtml(line.replace(/^\d+\.\s+/, ""))}</li>`).join("")}</ol>`;
+  }
+
+  if (lines.every((line) => /^>\s?/.test(line))) {
+    return `<blockquote>${lines.map((line) => renderInlineMarkdownHtml(line.replace(/^>\s?/, ""))).join("<br>")}</blockquote>`;
+  }
+
+  if (lines.length >= 2 && lines[0].startsWith("|") && /^\|\s*:?-{3,}:?\s*(\|\s*:?-{3,}:?\s*)+\|?$/.test(lines[1])) {
+    const rows = lines
+      .filter((line, index) => index !== 1)
+      .map((line) => line.replace(/^\||\|$/g, "").split("|").map((cell) => cell.trim()));
+    const [header, ...body] = rows;
+    return `<table><thead><tr>${header.map((cell) => `<th>${renderInlineMarkdownHtml(cell)}</th>`).join("")}</tr></thead><tbody>${body
+      .map((row) => `<tr>${row.map((cell) => `<td>${renderInlineMarkdownHtml(cell)}</td>`).join("")}</tr>`)
+      .join("")}</tbody></table>`;
+  }
+
+  return `<p>${renderInlineMarkdownHtml(block)}</p>`;
 }
 
 function renderInlineMarkdownHtml(text) {

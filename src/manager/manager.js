@@ -597,7 +597,7 @@ function renderPresetBuilder() {
   return `<article class="card full">
     <div>
       <h2>Create custom preset</h2>
-      <div class="task-meta">Custom presets are Pro-gated. Use comma-separated formats: markdown,json,pdf,png,txt,csv,tsv,jsonl,html.</div>
+      <div class="task-meta">Custom presets are Pro-gated. Use comma-separated formats: markdown,json,pdf,png,txt,csv,tsv,jsonl,html,word.</div>
       <label class="settings-field">
         <span>Name</span>
         <input type="text" id="presetName" value="Research backup">
@@ -608,7 +608,7 @@ function renderPresetBuilder() {
       </label>
       <label class="settings-field">
         <span>Formats</span>
-        <input type="text" id="presetFormats" value="markdown,jsonl,html">
+        <input type="text" id="presetFormats" value="markdown,jsonl,html,word">
       </label>
       <label class="settings-row">
         <input type="checkbox" id="presetIncludeMeta" checked>

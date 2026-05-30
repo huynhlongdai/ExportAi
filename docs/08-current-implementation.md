@@ -29,7 +29,8 @@
 - Message extraction now prefers structured content roots like `.markdown` and preserves `<pre><code>` blocks as fenced Markdown.
 - Message extraction captures links, images, and file hints as `assets[]` on each message and at the conversation root.
 - Popup/floating summary shows user vs AI message counts.
-- Export formats currently implemented: Markdown, JSON, PDF, PNG, TXT, CSV, TSV, JSONL, HTML.
+- Export formats currently implemented: Markdown, JSON, PDF, PNG, TXT, CSV, TSV, JSONL, HTML, Word-compatible DOC.
+- Markdown/HTML/Word rendering preserves heading hierarchy, lists, blockquotes, tables, code fences, links, images, and assets where available.
 - Manager page with task list, filters, Run/Retry, Delete.
 - Preset defaults are stored locally: AI Archive, Human Report, Dataset, Visual Snapshot, Full Backup.
 - Popup and floating modal can apply presets to formats and metadata.
@@ -79,10 +80,12 @@
 - Grok extraction now prunes nested/contained candidates so headings, links, and bullet fragments inside one answer are not exported as separate fake turns.
 - Gemini exports now clean plain text wrappers like `Bạn đã nói` / `You said` at the start of user messages.
 - DOM table extraction now renders Markdown tables instead of concatenating table cells into one line.
+- Ordered and unordered lists are preserved in Markdown extraction.
 - Content extraction now has a readable `main` fallback for platforms whose DOM does not expose known message selectors.
+- Perplexity support is implemented with local selectors, fixtures, diagnostics, and platform-specific build output.
 - Platform build strategy documented for full vs platform-specific extension listings.
-- Platform-specific manifest builder is implemented for ChatGPT, Grok, and Gemini variants.
-- Local adapter fixtures and a selector-count test runner are implemented for ChatGPT, Grok, and Gemini.
+- Platform-specific manifest builder is implemented for ChatGPT, Grok, Gemini, and Perplexity variants.
+- Local adapter fixtures and a selector-count test runner are implemented for ChatGPT, Grok, Gemini, and Perplexity.
 
 ## Not Yet Implemented
 

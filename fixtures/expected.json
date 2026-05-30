@@ -10,5 +10,9 @@
   "gemini": {
     "file": "fixtures/gemini/basic.html",
     "minimumSelectorMatches": 2
+  },
+  "perplexity": {
+    "file": "fixtures/perplexity/basic.html",
+    "minimumSelectorMatches": 2
   }
 }

@@ -9,6 +9,7 @@
     "build:chatgpt": "node tools/build-platform-manifest.cjs chatgpt",
     "build:grok": "node tools/build-platform-manifest.cjs grok",
     "build:gemini": "node tools/build-platform-manifest.cjs gemini",
+    "build:perplexity": "node tools/build-platform-manifest.cjs perplexity",
     "check": "node --check src/background.js && node --check src/contentScript.js && node --check src/manager/manager.js && node --check src/popup.js && node --check server/exportai-server.cjs && node --check tools/adapter-fixture-test.cjs && node --check tools/build-platform-manifest.cjs"
   }
 }

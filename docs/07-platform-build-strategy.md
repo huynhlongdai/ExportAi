@@ -94,9 +94,10 @@ src/
 ## Marketing loi ich
 
 - Full extension: tot cho power users, SEO theo "AI chat exporter".
-- ChatGPT-only: tot cho keyword "ChatGPT export", "export ChatGPT to PDF/Markdown".
+- ChatGPT-only: tot cho keyword "ChatGPT export", "export ChatGPT to PDF/Markdown/Word".
 - Grok-only: tot cho nguoi dung X/Grok.
 - Gemini-only: tot cho Google ecosystem.
+- Perplexity-only: tot cho keyword "Perplexity export", "Perplexity to Markdown/Word", "export Perplexity sources".
 
 ## Can lam khi co build pipeline
 
@@ -105,4 +106,3 @@ src/
 3. Tao icon/screenshot/listing rieng.
 4. Tao landing page rieng cho tung platform.
 5. Dung cung license backend de Pro co the mo khoa full suite hoac tung app.
-

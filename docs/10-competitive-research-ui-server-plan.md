@@ -208,6 +208,7 @@ Create four listing paths:
 - ExportAI for ChatGPT.
 - ExportAI for Grok.
 - ExportAI for Gemini.
+- ExportAI for Perplexity.
 
 Each listing should have:
 
@@ -220,7 +221,9 @@ Each listing should have:
 ## Immediate Next Build Tasks
 
 1. Implement the redesigned UI surfaces.
-2. Add `/api/status` and adapter rollback server endpoints.
-3. Add diagnostic detail view in Manager.
-4. Add Chrome Web Store asset checklist.
-5. Add first landing page or README screenshots for GitHub.
+2. Expand provider support beyond ChatGPT/Grok/Gemini, starting with Perplexity.
+3. Add Word export and preserve heading/list/table structure across Markdown/HTML/Word.
+4. Add `/api/status` and adapter rollback server endpoints.
+5. Add diagnostic detail view in Manager.
+6. Add Chrome Web Store asset checklist.
+7. Add first landing page or README screenshots for GitHub.

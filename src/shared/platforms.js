@@ -76,6 +76,35 @@
         user: /(user|you|bạn|human|query)/i,
         assistant: /(assistant|gemini|model|response|ai)/i
       }
+    },
+    perplexity: {
+      id: "perplexity",
+      name: "Perplexity",
+      adapterVersion: "2026.05.30.1",
+      adapterStatus: "local",
+      productName: "ExportAI for Perplexity",
+      hosts: ["perplexity.ai", "www.perplexity.ai"],
+      matches: ["https://www.perplexity.ai/*", "https://perplexity.ai/*"],
+      selectors: [
+        '[data-testid*="thread"]',
+        '[data-testid*="query"]',
+        '[data-testid*="answer"]',
+        '[class*="query"]',
+        '[class*="answer"]',
+        '[class*="prose"]',
+        "article"
+      ],
+      selectorGroups: [
+        ['[data-testid*="query"]', '[data-testid*="answer"]'],
+        ['[class*="query"]', '[class*="answer"]'],
+        ['[data-testid*="thread"]'],
+        ['[class*="prose"]'],
+        ["article"]
+      ],
+      roleHints: {
+        user: /(user|you|bạn|human|query|question|prompt)/i,
+        assistant: /(assistant|perplexity|answer|response|ai|model)/i
+      }
     }
   };
 

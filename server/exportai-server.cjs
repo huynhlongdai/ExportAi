@@ -29,7 +29,8 @@ const DEFAULT_STORE = {
   adapters: {
     chatgpt: [],
     grok: [],
-    gemini: []
+    gemini: [],
+    perplexity: []
   },
   diagnostics: [],
   proposals: []
@@ -242,7 +243,7 @@ function proposeAdapter(platform, diagnostic, current) {
 }
 
 function validateAdapter(platform, adapter) {
-  if (!["chatgpt", "grok", "gemini"].includes(platform)) {
+  if (!["chatgpt", "grok", "gemini", "perplexity"].includes(platform)) {
     return { ok: false, error: "Unsupported platform." };
   }
   if (!adapter || adapter.id !== platform) {
