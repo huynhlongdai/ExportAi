@@ -14,5 +14,21 @@
   "perplexity": {
     "file": "fixtures/perplexity/basic.html",
     "minimumSelectorMatches": 2
+  },
+  "claude": {
+    "file": "fixtures/claude/basic.html",
+    "minimumSelectorMatches": 2
+  },
+  "copilot": {
+    "file": "fixtures/copilot/basic.html",
+    "minimumSelectorMatches": 2
+  },
+  "devin": {
+    "file": "fixtures/devin/basic.html",
+    "minimumSelectorMatches": 2
+  },
+  "lovable": {
+    "file": "fixtures/lovable/basic.html",
+    "minimumSelectorMatches": 2
   }
 }

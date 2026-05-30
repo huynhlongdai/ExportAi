@@ -98,6 +98,10 @@ src/
 - Grok-only: tot cho nguoi dung X/Grok.
 - Gemini-only: tot cho Google ecosystem.
 - Perplexity-only: tot cho keyword "Perplexity export", "Perplexity to Markdown/Word", "export Perplexity sources".
+- Claude-only: tot cho keyword "Claude export", "Claude to Markdown/Word".
+- Copilot-only: tot cho Microsoft/Bing Copilot workflows.
+- Devin-only: tot cho coding-agent transcript archive va audit.
+- Lovable-only: tot cho app-builder prompt/history archive.
 
 ## Can lam khi co build pipeline
 

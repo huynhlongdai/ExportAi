@@ -1,6 +1,6 @@
 # ExportAI
 
-Chrome extension giúp export hội thoại từ ChatGPT, Grok, Gemini và Perplexity sang:
+Chrome extension giúp export hội thoại từ ChatGPT, Grok, Gemini, Perplexity, Claude, Copilot, Devin và Lovable sang:
 
 - Markdown (`.md`)
 - JSON (`.json`)
@@ -21,7 +21,7 @@ Chrome extension giúp export hội thoại từ ChatGPT, Grok, Gemini và Perpl
 
 ## Cách dùng
 
-1. Mở một hội thoại trên ChatGPT, Grok, Gemini hoặc Perplexity.
+1. Mở một hội thoại trên ChatGPT, Grok, Gemini, Perplexity, Claude, Copilot, Devin hoặc Lovable.
 2. Dùng icon nổi ExportAI trên trang chat hoặc bấm icon ExportAI trên thanh extension.
 3. Chọn định dạng muốn export.
 4. Mở `Manager` để xem task, retry hoặc xóa lịch sử export.
@@ -67,6 +67,10 @@ npm run build:chatgpt
 npm run build:grok
 npm run build:gemini
 npm run build:perplexity
+npm run build:claude
+npm run build:copilot
+npm run build:devin
+npm run build:lovable
 ```
 
 ## Product spec và plan

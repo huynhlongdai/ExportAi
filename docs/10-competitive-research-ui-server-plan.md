@@ -209,6 +209,10 @@ Create four listing paths:
 - ExportAI for Grok.
 - ExportAI for Gemini.
 - ExportAI for Perplexity.
+- ExportAI for Claude.
+- ExportAI for Copilot.
+- ExportAI for Devin.
+- ExportAI for Lovable.
 
 Each listing should have:
 

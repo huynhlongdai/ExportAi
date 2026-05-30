@@ -42,6 +42,11 @@ San pham khong chi la nut "export ngay", ma la mot he thong quan ly export gom:
 - ChatGPT: `chatgpt.com`, `chat.openai.com`
 - Grok: `grok.com`, `x.com/i/grok`
 - Gemini: `gemini.google.com`
+- Perplexity: `perplexity.ai`
+- Claude: `claude.ai`
+- Copilot: `copilot.microsoft.com`, `bing.com/chat`
+- Devin: `devin.ai`, `app.devin.ai`
+- Lovable: `lovable.dev`
 
 ## Dinh dang ho tro ban dau
 
@@ -57,4 +62,3 @@ San pham khong chi la nut "export ngay", ma la mot he thong quan ly export gom:
 - Khong dua logic fragile vao mot cho; moi platform co adapter rieng.
 - Uu tien remote config hon remote code de an toan voi Chrome extension policy.
 - Moi export nen co task record de debug, retry, va quan ly.
-

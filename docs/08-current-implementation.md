@@ -82,10 +82,10 @@
 - DOM table extraction now renders Markdown tables instead of concatenating table cells into one line.
 - Ordered and unordered lists are preserved in Markdown extraction.
 - Content extraction now has a readable `main` fallback for platforms whose DOM does not expose known message selectors.
-- Perplexity support is implemented with local selectors, fixtures, diagnostics, and platform-specific build output.
+- Perplexity, Claude, Copilot, Devin, and Lovable support is implemented with local selectors, fixtures, diagnostics, and platform-specific build output.
 - Platform build strategy documented for full vs platform-specific extension listings.
-- Platform-specific manifest builder is implemented for ChatGPT, Grok, Gemini, and Perplexity variants.
-- Local adapter fixtures and a selector-count test runner are implemented for ChatGPT, Grok, Gemini, and Perplexity.
+- Platform-specific manifest builder is implemented for ChatGPT, Grok, Gemini, Perplexity, Claude, Copilot, Devin, and Lovable variants.
+- Local adapter fixtures and a selector-count test runner are implemented for ChatGPT, Grok, Gemini, Perplexity, Claude, Copilot, Devin, and Lovable.
 
 ## Not Yet Implemented
 

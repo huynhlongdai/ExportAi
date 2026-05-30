@@ -863,6 +863,24 @@ function inferRole(node, index, platform) {
       };
     }
   }
+  if (["claude", "copilot", "devin", "lovable"].includes(platform.id)) {
+    if (/user|human|prompt|query/i.test(roleContext)) {
+      return {
+        role: "user",
+        confidence: 0.78,
+        source: `${platform.id}-class`,
+        reason: `${platform.name} class/test id matched user-like hint.`
+      };
+    }
+    if (/assistant|agent|bot|response|answer|model|claude|copilot|devin|lovable/i.test(roleContext)) {
+      return {
+        role: "assistant",
+        confidence: 0.78,
+        source: `${platform.id}-class`,
+        reason: `${platform.name} class/test id matched assistant-like hint.`
+      };
+    }
+  }
 
   return {
     role: index % 2 === 0 ? "user" : "assistant",

@@ -1,0 +1,45 @@
+{
+  "manifest_version": 3,
+  "name": "ExportAI for Lovable",
+  "version": "0.1.0",
+  "description": "Export Lovable conversations to Markdown, JSON, PDF, images, and AI-ready data files.",
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "ExportAI"
+  },
+  "side_panel": {
+    "default_path": "manager.html"
+  },
+  "background": {
+    "service_worker": "src/background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://lovable.dev/*",
+        "https://www.lovable.dev/*"
+      ],
+      "js": [
+        "src/shared/platforms.js",
+        "src/contentScript.js"
+      ],
+      "run_at": "document_idle"
+    }
+  ],
+  "permissions": [
+    "activeTab",
+    "alarms",
+    "downloads",
+    "scripting",
+    "sidePanel",
+    "storage",
+    "tabs",
+    "windows"
+  ],
+  "host_permissions": [
+    "https://lovable.dev/*",
+    "https://www.lovable.dev/*",
+    "http://127.0.0.1:8787/*",
+    "http://localhost:8787/*"
+  ]
+}

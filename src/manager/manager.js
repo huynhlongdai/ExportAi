@@ -312,7 +312,12 @@ function renderRuleBuilder() {
     ["any", "Any supported platform"],
     ["chatgpt", "ChatGPT"],
     ["grok", "Grok"],
-    ["gemini", "Gemini"]
+    ["gemini", "Gemini"],
+    ["perplexity", "Perplexity"],
+    ["claude", "Claude"],
+    ["copilot", "Copilot"],
+    ["devin", "Devin"],
+    ["lovable", "Lovable"]
   ]
     .map(([value, label]) => `<option value="${escapeHtml(value)}">${escapeHtml(label)}</option>`)
     .join("");

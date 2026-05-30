@@ -24,7 +24,7 @@ async function main() {
 
   const platform = platforms[platformId];
   if (!platform) {
-    throw new Error(`Unknown platform "${platformId}". Use chatgpt, grok, gemini, perplexity, or full.`);
+    throw new Error(`Unknown platform "${platformId}". Use chatgpt, grok, gemini, perplexity, claude, copilot, devin, lovable, or full.`);
   }
 
   const nextManifest = {

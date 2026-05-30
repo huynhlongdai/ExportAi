@@ -105,6 +105,129 @@
         user: /(user|you|bạn|human|query|question|prompt)/i,
         assistant: /(assistant|perplexity|answer|response|ai|model)/i
       }
+    },
+    claude: {
+      id: "claude",
+      name: "Claude",
+      adapterVersion: "2026.05.30.1",
+      adapterStatus: "local",
+      productName: "ExportAI for Claude",
+      hosts: ["claude.ai"],
+      matches: ["https://claude.ai/*"],
+      selectors: [
+        '[data-testid*="user"]',
+        '[data-testid*="assistant"]',
+        '[data-testid*="message"]',
+        '[class*="user"]',
+        '[class*="assistant"]',
+        '[class*="message"]',
+        '[class*="prose"]',
+        "article"
+      ],
+      selectorGroups: [
+        ['[data-testid*="user"]', '[data-testid*="assistant"]'],
+        ['[class*="user"]', '[class*="assistant"]'],
+        ['[data-testid*="message"]'],
+        ['[class*="message"]'],
+        ['[class*="prose"]'],
+        ["article"]
+      ],
+      roleHints: {
+        user: /(user|you|bạn|human|prompt|query)/i,
+        assistant: /(assistant|claude|model|response|answer|ai)/i
+      }
+    },
+    copilot: {
+      id: "copilot",
+      name: "Copilot",
+      adapterVersion: "2026.05.30.1",
+      adapterStatus: "local",
+      productName: "ExportAI for Copilot",
+      hosts: ["copilot.microsoft.com", "www.bing.com"],
+      matches: ["https://copilot.microsoft.com/*", "https://www.bing.com/chat*"],
+      selectors: [
+        '[data-testid*="message"]',
+        '[data-testid*="user"]',
+        '[data-testid*="assistant"]',
+        '[class*="message"]',
+        '[class*="user"]',
+        '[class*="assistant"]',
+        '[class*="response"]',
+        "article"
+      ],
+      selectorGroups: [
+        ['[data-testid*="user"]', '[data-testid*="assistant"]'],
+        ['[data-testid*="message"]'],
+        ['[class*="user"]', '[class*="assistant"]'],
+        ['[class*="message"]'],
+        ["article"]
+      ],
+      roleHints: {
+        user: /(user|you|bạn|human|prompt|query)/i,
+        assistant: /(assistant|copilot|bing|response|answer|model|ai)/i
+      }
+    },
+    devin: {
+      id: "devin",
+      name: "Devin",
+      adapterVersion: "2026.05.30.1",
+      adapterStatus: "local",
+      productName: "ExportAI for Devin",
+      hosts: ["devin.ai", "app.devin.ai"],
+      matches: ["https://devin.ai/*", "https://app.devin.ai/*"],
+      selectors: [
+        '[data-testid*="message"]',
+        '[data-testid*="user"]',
+        '[data-testid*="devin"]',
+        '[class*="message"]',
+        '[class*="user"]',
+        '[class*="assistant"]',
+        '[class*="prose"]',
+        "article"
+      ],
+      selectorGroups: [
+        ['[data-testid*="user"]', '[data-testid*="devin"]'],
+        ['[data-testid*="message"]'],
+        ['[class*="user"]', '[class*="assistant"]'],
+        ['[class*="message"]'],
+        ['[class*="prose"]'],
+        ["article"]
+      ],
+      roleHints: {
+        user: /(user|you|bạn|human|prompt|query)/i,
+        assistant: /(assistant|devin|agent|response|answer|model|ai)/i
+      }
+    },
+    lovable: {
+      id: "lovable",
+      name: "Lovable",
+      adapterVersion: "2026.05.30.1",
+      adapterStatus: "local",
+      productName: "ExportAI for Lovable",
+      hosts: ["lovable.dev", "www.lovable.dev"],
+      matches: ["https://lovable.dev/*", "https://www.lovable.dev/*"],
+      selectors: [
+        '[data-testid*="message"]',
+        '[data-testid*="user"]',
+        '[data-testid*="assistant"]',
+        '[class*="message"]',
+        '[class*="user"]',
+        '[class*="assistant"]',
+        '[class*="prose"]',
+        "article"
+      ],
+      selectorGroups: [
+        ['[data-testid*="user"]', '[data-testid*="assistant"]'],
+        ['[data-testid*="message"]'],
+        ['[class*="user"]', '[class*="assistant"]'],
+        ['[class*="message"]'],
+        ['[class*="prose"]'],
+        ["article"]
+      ],
+      roleHints: {
+        user: /(user|you|bạn|human|prompt|query)/i,
+        assistant: /(assistant|lovable|agent|response|answer|model|ai)/i
+      }
     }
   };
 
