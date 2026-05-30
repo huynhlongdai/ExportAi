@@ -1,0 +1,39 @@
+{
+  "manifest_version": 3,
+  "name": "ExportAI",
+  "version": "0.1.0",
+  "description": "Export AI chat conversations from ChatGPT, Grok, and Gemini to AI-ready files.",
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "ExportAI"
+  },
+  "side_panel": {
+    "default_path": "manager.html"
+  },
+  "background": {
+    "service_worker": "src/background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://chatgpt.com/*",
+        "https://chat.openai.com/*",
+        "https://grok.com/*",
+        "https://x.com/i/grok*",
+        "https://gemini.google.com/*"
+      ],
+      "js": ["src/shared/platforms.js", "src/contentScript.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "permissions": ["activeTab", "alarms", "downloads", "scripting", "sidePanel", "storage", "tabs", "windows"],
+  "host_permissions": [
+    "https://chatgpt.com/*",
+    "https://chat.openai.com/*",
+    "https://grok.com/*",
+    "https://x.com/i/grok*",
+    "https://gemini.google.com/*",
+    "http://127.0.0.1:8787/*",
+    "http://localhost:8787/*"
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "chatgpt": {
+    "file": "fixtures/chatgpt/basic.html",
+    "minimumSelectorMatches": 2
+  },
+  "grok": {
+    "file": "fixtures/grok/basic.html",
+    "minimumSelectorMatches": 2
+  },
+  "gemini": {
+    "file": "fixtures/gemini/basic.html",
+    "minimumSelectorMatches": 2
+  }
+}

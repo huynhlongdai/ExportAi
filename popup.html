@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ExportAI</title>
+    <link rel="stylesheet" href="src/popup.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <header class="header">
+        <div>
+          <h1>ExportAI</h1>
+          <p id="status">Sẵn sàng export hội thoại AI.</p>
+        </div>
+      </header>
+
+      <section class="formats" aria-label="Định dạng export">
+        <button class="active" data-format="markdown" type="button">
+          <span>MD</span>
+          <strong>Markdown</strong>
+        </button>
+        <button data-format="json" type="button">
+          <span>{}</span>
+          <strong>JSON</strong>
+        </button>
+        <button data-format="pdf" type="button">
+          <span>PDF</span>
+          <strong>PDF</strong>
+        </button>
+        <button data-format="png" type="button">
+          <span>PNG</span>
+          <strong>Ảnh</strong>
+        </button>
+        <button data-format="txt" type="button">
+          <span>TXT</span>
+          <strong>Text</strong>
+        </button>
+        <button data-format="csv" type="button">
+          <span>CSV</span>
+          <strong>CSV</strong>
+        </button>
+        <button data-format="tsv" type="button">
+          <span>TSV</span>
+          <strong>TSV</strong>
+        </button>
+        <button data-format="jsonl" type="button">
+          <span>JL</span>
+          <strong>JSONL</strong>
+        </button>
+        <button data-format="html" type="button">
+          <span>HTML</span>
+          <strong>HTML</strong>
+        </button>
+      </section>
+
+      <label class="field">
+        <span>Preset</span>
+        <select id="presetSelect"></select>
+      </label>
+
+      <label class="option">
+        <input id="includeMeta" type="checkbox" checked />
+        <span>Thêm metadata cuộc hội thoại</span>
+      </label>
+
+      <div class="actions">
+        <button id="quickExport" type="button">Export now</button>
+        <button id="openFloating" type="button">Floating tool</button>
+        <button id="openManager" type="button">Manager</button>
+      </div>
+    </main>
+
+    <script src="src/popup.js"></script>
+  </body>
+</html>

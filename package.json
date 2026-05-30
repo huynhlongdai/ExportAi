@@ -1,0 +1,14 @@
+{
+  "name": "exportai",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Chrome extension and local server MVP for exporting AI chat conversations.",
+  "scripts": {
+    "server": "node server/exportai-server.cjs",
+    "test:adapters": "node tools/adapter-fixture-test.cjs",
+    "build:chatgpt": "node tools/build-platform-manifest.cjs chatgpt",
+    "build:grok": "node tools/build-platform-manifest.cjs grok",
+    "build:gemini": "node tools/build-platform-manifest.cjs gemini",
+    "check": "node --check src/background.js && node --check src/contentScript.js && node --check src/manager/manager.js && node --check src/popup.js && node --check server/exportai-server.cjs && node --check tools/adapter-fixture-test.cjs && node --check tools/build-platform-manifest.cjs"
+  }
+}
