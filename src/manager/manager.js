@@ -13,6 +13,7 @@ let managerState = {
   presets: [],
   archives: [],
   diagnostics: [],
+  repairProposals: [],
   rules: [],
   adapters: []
   ,
@@ -45,6 +46,7 @@ taskListEl.addEventListener("click", async (event) => {
   const diagnosticId = button.closest("[data-diagnostic-id]")?.dataset.diagnosticId;
   const ruleId = button.closest("[data-rule-id]")?.dataset.ruleId;
   const presetId = button.closest("[data-preset-id]")?.dataset.presetId;
+  const proposalId = button.closest("[data-proposal-id]")?.dataset.proposalId;
 
   if (button.dataset.action === "run" && taskId) {
     await chrome.runtime.sendMessage({ type: "EXPORT_AI_RUN_TASK_BY_ID", taskId });
@@ -127,6 +129,18 @@ taskListEl.addEventListener("click", async (event) => {
     }
   }
 
+  if (button.dataset.action === "approve-proposal" && proposalId) {
+    await chrome.runtime.sendMessage({ type: "EXPORT_AI_APPROVE_REPAIR_PROPOSAL", proposalId });
+  }
+
+  if (button.dataset.action === "reject-proposal" && proposalId) {
+    await chrome.runtime.sendMessage({
+      type: "EXPORT_AI_REJECT_REPAIR_PROPOSAL",
+      proposalId,
+      reason: "Rejected from ExportAI Manager."
+    });
+  }
+
   if (button.dataset.action === "create-link-job") {
     await createLinkJobFromForm();
   }
@@ -163,6 +177,7 @@ function renderManager() {
   if (activeView === "tasks") renderTasks();
   if (activeView === "archives") renderArchives();
   if (activeView === "diagnostics") renderDiagnostics();
+  if (activeView === "repair") renderRepair();
   if (activeView === "adapters") renderAdapters();
   if (activeView === "rules") renderRules();
   if (activeView === "presets") renderPresets();
@@ -265,6 +280,10 @@ function renderSettings() {
         <input type="text" data-setting="licenseKey" value="${escapeHtml(settings.licenseKey || "")}" placeholder="free-local-dev or live license key">
       </label>
       <label class="settings-field">
+        <span>Admin token</span>
+        <input type="text" data-setting="adminToken" value="${escapeHtml(settings.adminToken || "dev-admin-token")}" placeholder="dev-admin-token">
+      </label>
+      <label class="settings-field">
         <span>Default preset id</span>
         <input type="text" data-setting="defaultPresetId" value="${escapeHtml(settings.defaultPresetId || "ai_archive")}">
       </label>
@@ -277,6 +296,54 @@ function renderSettings() {
     <div>
       <button type="button" data-action="save-settings">Save</button>
       <button type="button" data-action="validate-license">Validate license</button>
+    </div>
+  </article>`;
+}
+
+function renderRepair() {
+  const proposals = managerState.repairProposals || [];
+  const serverStatus = managerState.serverStatus || {};
+
+  if (!serverStatus.online) {
+    taskListEl.innerHTML = `<article class="card full">
+      <div>
+        <h2>Repair proposals</h2>
+        <div class="task-meta">Server is offline. Start the ExportAI server and refresh Manager to review repair proposals.</div>
+        ${serverStatus.error ? `<div class="task-meta">Error: ${escapeHtml(serverStatus.error)}</div>` : ""}
+      </div>
+    </article>`;
+    return;
+  }
+
+  if (!proposals.length) {
+    taskListEl.innerHTML = `<article class="card full">
+      <div>
+        <h2>Repair proposals</h2>
+        <div class="task-meta">No proposals yet. Use Diagnostics > Try repair to generate selector-only adapter proposals.</div>
+      </div>
+    </article>`;
+    return;
+  }
+
+  taskListEl.innerHTML = proposals.map(renderRepairProposal).join("");
+}
+
+function renderRepairProposal(proposal) {
+  const selectors = proposal.adapter?.selectors || [];
+  const statusClass = proposal.status === "rejected" ? " failed" : proposal.status === "published" ? " remote" : "";
+  return `<article class="card" data-proposal-id="${escapeHtml(proposal.id)}">
+    <div>
+      <h2>${escapeHtml(proposal.platform || "unknown")} repair</h2>
+      <div class="task-meta">Status: ${escapeHtml(proposal.status || "unknown")} · Confidence: ${escapeHtml(Math.round((proposal.confidence || 0) * 100))}% · Test: ${escapeHtml(proposal.testStatus || "not_run")}</div>
+      <div class="task-meta">${escapeHtml(proposal.reason || "")}</div>
+      <div class="format-row diagnostics">${selectors.map((selector) => `<span>${escapeHtml(selector)}</span>`).join("")}</div>
+    </div>
+    <div>
+      <div class="badge${statusClass}">${escapeHtml(proposal.status || "proposed")}</div>
+      <div class="task-actions">
+        <button type="button" data-action="approve-proposal" ${proposal.status === "published" ? "disabled" : ""}>Approve</button>
+        <button type="button" data-action="reject-proposal" ${proposal.status === "rejected" ? "disabled" : ""}>Reject</button>
+      </div>
     </div>
   </article>`;
 }

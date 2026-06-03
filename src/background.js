@@ -84,6 +84,7 @@ const DEFAULT_SETTINGS = {
   autoFetchRemoteAdapters: false,
   serverUrl: "http://127.0.0.1:8787",
   licenseKey: "",
+  adminToken: "dev-admin-token",
   defaultPresetId: "ai_archive",
   filenamePattern: "ExportAI-{platform}-{title}-{date}-{format}"
 };
@@ -165,6 +166,12 @@ async function handleMessage(message, sender) {
       return uploadDiagnostic(message.diagnosticId, message.privacyMode);
     case "EXPORT_AI_REQUEST_REPAIR":
       return requestRepair(message.diagnosticId, message.privacyMode);
+    case "EXPORT_AI_LIST_REPAIR_PROPOSALS":
+      return listRepairProposals();
+    case "EXPORT_AI_APPROVE_REPAIR_PROPOSAL":
+      return approveRepairProposal(message.proposalId);
+    case "EXPORT_AI_REJECT_REPAIR_PROPOSAL":
+      return rejectRepairProposal(message.proposalId, message.reason);
     case "EXPORT_AI_CREATE_RULE":
       return createRule(message.rule);
     case "EXPORT_AI_DELETE_RULE":
@@ -502,7 +509,7 @@ function urlsMatch(expectedUrl, actualUrl) {
 }
 
 async function getManagerState() {
-  const [tasks, plan, presets, archives, diagnostics, rules, adapters, settings, serverStatus] = await Promise.all([
+  const [tasks, plan, presets, archives, diagnostics, rules, adapters, settings, serverStatus, repairProposals] = await Promise.all([
     getTasks(),
     getPlanState(),
     getPresets(),
@@ -511,7 +518,8 @@ async function getManagerState() {
     getRules(),
     getAdapters(),
     getSettings(),
-    getServerStatus()
+    getServerStatus(),
+    listRepairProposals()
   ]);
   return {
     ok: true,
@@ -523,7 +531,8 @@ async function getManagerState() {
     rules,
     adapters,
     settings,
-    serverStatus
+    serverStatus,
+    repairProposals: repairProposals.proposals || []
   };
 }
 
@@ -744,6 +753,43 @@ async function requestRepair(diagnosticId, privacyMode = "private") {
   });
 
   return response.ok ? { ok: true, response } : { ok: false, error: response.error || "Repair request failed" };
+}
+
+async function listRepairProposals() {
+  try {
+    const response = await serverFetch("/api/repair/proposals?limit=50", { admin: true });
+    return response.ok ? response : { ok: false, proposals: [], error: response.error || "Could not load proposals." };
+  } catch (error) {
+    return { ok: false, proposals: [], error: error.message };
+  }
+}
+
+async function approveRepairProposal(proposalId) {
+  if (!proposalId) return { ok: false, error: "Proposal id is required." };
+  const response = await serverFetch(`/api/repair/proposals/${encodeURIComponent(proposalId)}/approve`, {
+    method: "POST",
+    admin: true,
+    body: {}
+  });
+  if (!response.ok || !response.adapter) {
+    return { ok: false, error: response.error || "Approve failed." };
+  }
+  await importAdapterConfig({
+    ...response.adapter,
+    status: "override",
+    source: "repair-approved"
+  });
+  return { ok: true, response };
+}
+
+async function rejectRepairProposal(proposalId, reason) {
+  if (!proposalId) return { ok: false, error: "Proposal id is required." };
+  const response = await serverFetch(`/api/repair/proposals/${encodeURIComponent(proposalId)}/reject`, {
+    method: "POST",
+    admin: true,
+    body: { reason: reason || "Rejected from ExportAI Manager." }
+  });
+  return response.ok ? { ok: true, response } : { ok: false, error: response.error || "Reject failed." };
 }
 
 async function getAdapters() {
@@ -1703,7 +1749,9 @@ async function serverFetch(path, options = {}) {
     "content-type": "application/json"
   };
 
-  if (settings.licenseKey) {
+  if (options.admin && settings.adminToken) {
+    headers.authorization = `Bearer ${settings.adminToken}`;
+  } else if (settings.licenseKey) {
     headers.authorization = `Bearer ${settings.licenseKey}`;
   }
 

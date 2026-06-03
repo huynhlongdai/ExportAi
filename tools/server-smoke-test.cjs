@@ -94,13 +94,24 @@ async function main() {
   });
   assert(proposal.ok && proposal.proposalId, "repair proposal failed");
 
+  const approve = await postJson(`/api/repair/proposals/${proposal.proposalId}/approve`, {}, true);
+  assert(approve.ok && approve.adapter, "proposal approve failed");
+
+  const proposalToReject = await postJson("/api/repair/proposals", {
+    platform: "chatgpt",
+    errorType: "NO_MESSAGES_FOUND",
+    selectorResults: { article: 2 },
+    domSignature: { tagCounts: { article: 2 } }
+  });
+  assert(proposalToReject.ok && proposalToReject.proposalId, "repair proposal for reject failed");
+
   const diagnostics = await getJson("/api/diagnostics?limit=1", true);
   assert(diagnostics.ok && diagnostics.page.total >= 1, "diagnostic pagination failed");
 
   const proposals = await getJson("/api/repair/proposals?limit=1", true);
   assert(proposals.ok && proposals.page.total >= 1, "proposal pagination failed");
 
-  const reject = await postJson(`/api/repair/proposals/${proposal.proposalId}/reject`, { reason: "Smoke test reject." }, true);
+  const reject = await postJson(`/api/repair/proposals/${proposalToReject.proposalId}/reject`, { reason: "Smoke test reject." }, true);
   assert(reject.ok && reject.proposal.status === "rejected", "proposal reject failed");
 
   console.log(JSON.stringify({ ok: true, server: status.version, proposalId: proposal.proposalId }, null, 2));

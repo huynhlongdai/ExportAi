@@ -239,6 +239,7 @@ Each listing should have:
   - Manager Dashboard shows export counts, archive counts, failures, waiting jobs, adapter health, server status, and recent failures.
   - Manager Diagnostics has detail JSON, upload, repair, and delete actions.
   - Manager Adapters can fetch remote configs and request server rollback.
+  - Manager Repair lists server proposals and supports approve/reject actions.
 - Provider support now includes ChatGPT, Grok, Gemini, Perplexity, Claude, Copilot, Devin, and Lovable.
 - Word-compatible DOC export is implemented, and Markdown/HTML/Word preserve headings, lists, blockquotes, tables, code, links, images, and assets where available.
 - Server hardening is implemented:
@@ -246,6 +247,7 @@ Each listing should have:
   - paginated diagnostics/proposals
   - adapter rollback
   - proposal reject
+  - proposal approve/publish from Manager
   - schema version migration
   - adapter/diagnostic validation
   - `npm run test:server` smoke test

@@ -35,6 +35,7 @@
 - Manager Dashboard is implemented with export counts, archive counts, failures, waiting jobs, adapter health, server status, and recent failures.
 - Manager Diagnostics includes detail JSON, upload, repair, and delete actions.
 - Manager Adapters shows diagnostic health and can request server rollback for a provider adapter.
+- Manager Repair view lists server proposals and supports approve/reject actions using the configured admin token.
 - Preset defaults are stored locally: AI Archive, Human Report, Dataset, Visual Snapshot, Full Backup.
 - Popup and floating modal can apply presets to formats and metadata.
 - Manager now has Tasks, Presets, and Plan views.
@@ -67,7 +68,7 @@
 - Backend server MVP is implemented in `server/exportai-server.cjs`.
 - Server MVP supports license validation, remote adapter publish/fetch, diagnostics storage, repair proposal creation, and proposal approval.
 - Server hardening includes `/api/status`, paginated diagnostics/proposals, adapter rollback, proposal reject, schema version migration, and basic diagnostic/adapter validation.
-- `npm run test:server` runs a local smoke test for health, status, license, adapter publish/latest, diagnostics, repair proposals, and pagination.
+- `npm run test:server` runs a local smoke test for health, status, license, adapter publish/latest/rollback, diagnostics, repair proposals, approve/reject, and pagination.
 - Manager Settings supports server URL/license key and Pro license validation.
 - Export Settings module is implemented.
 - Background stores settings for default metadata, asset inclusion, UI wrapper cleanup, tool failure notice cleanup, default preset, and filename pattern.
