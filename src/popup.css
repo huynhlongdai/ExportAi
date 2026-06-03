@@ -36,6 +36,44 @@ p {
   line-height: 1.4;
 }
 
+.command-panel {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 12px;
+  padding: 10px;
+  border: 1px solid #d7ded8;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.command-panel[hidden] {
+  display: none;
+}
+
+.command-panel strong,
+.command-panel span {
+  display: block;
+}
+
+.command-panel strong {
+  font-size: 13px;
+}
+
+.command-panel span {
+  margin-top: 3px;
+  color: #607068;
+  font-size: 12px;
+}
+
+.command-panel .warning {
+  padding: 7px 8px;
+  border-radius: 6px;
+  background: #fff5e6;
+  color: #7a4d05;
+  font-size: 12px;
+  font-weight: 800;
+}
+
 .formats {
   display: grid;
   grid-template-columns: repeat(3, 1fr);

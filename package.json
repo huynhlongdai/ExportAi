@@ -6,6 +6,7 @@
   "scripts": {
     "server": "node server/exportai-server.cjs",
     "test:adapters": "node tools/adapter-fixture-test.cjs",
+    "test:server": "node tools/server-smoke-test.cjs",
     "build:chatgpt": "node tools/build-platform-manifest.cjs chatgpt",
     "build:grok": "node tools/build-platform-manifest.cjs grok",
     "build:gemini": "node tools/build-platform-manifest.cjs gemini",
@@ -14,6 +15,6 @@
     "build:copilot": "node tools/build-platform-manifest.cjs copilot",
     "build:devin": "node tools/build-platform-manifest.cjs devin",
     "build:lovable": "node tools/build-platform-manifest.cjs lovable",
-    "check": "node --check src/background.js && node --check src/contentScript.js && node --check src/manager/manager.js && node --check src/popup.js && node --check server/exportai-server.cjs && node --check tools/adapter-fixture-test.cjs && node --check tools/build-platform-manifest.cjs"
+    "check": "node --check src/background.js && node --check src/contentScript.js && node --check src/manager/manager.js && node --check src/popup.js && node --check server/exportai-server.cjs && node --check tools/adapter-fixture-test.cjs && node --check tools/server-smoke-test.cjs && node --check tools/build-platform-manifest.cjs"
   }
 }

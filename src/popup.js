@@ -1,4 +1,5 @@
 const statusEl = document.querySelector("#status");
+const commandPanelEl = document.querySelector("#commandPanel");
 const includeMetaEl = document.querySelector("#includeMeta");
 const presetSelectEl = document.querySelector("#presetSelect");
 const formatButtons = [...document.querySelectorAll("button[data-format]")];
@@ -11,6 +12,7 @@ let pageSummary;
 let planState;
 let presets = [];
 let settings = null;
+let managerState = null;
 let activePresetId = "custom";
 
 formatButtons.forEach((button) => {
@@ -54,22 +56,25 @@ initPopup();
 async function initPopup() {
   try {
     [activeTab] = await chrome.tabs.query({ active: true, currentWindow: true });
-    const [summaryResponse, planResponse, presetResponse, settingsResponse] = await Promise.all([
+    const [summaryResponse, planResponse, presetResponse, settingsResponse, managerResponse] = await Promise.all([
       chrome.runtime.sendMessage({ type: "EXPORT_AI_GET_PAGE_SUMMARY" }),
       chrome.runtime.sendMessage({ type: "EXPORT_AI_GET_PLAN" }),
       chrome.runtime.sendMessage({ type: "EXPORT_AI_GET_PRESETS" }),
-      chrome.runtime.sendMessage({ type: "EXPORT_AI_GET_SETTINGS" })
+      chrome.runtime.sendMessage({ type: "EXPORT_AI_GET_SETTINGS" }),
+      chrome.runtime.sendMessage({ type: "EXPORT_AI_GET_MANAGER_STATE" })
     ]);
 
     pageSummary = summaryResponse?.summary;
     planState = planResponse?.plan;
     presets = presetResponse?.presets || [];
     settings = settingsResponse?.settings || null;
+    managerState = managerResponse?.ok ? managerResponse : null;
     includeMetaEl.checked = settings?.includeMetaDefault !== false;
     renderPresets();
 
     if (!pageSummary?.supported) {
-      statusEl.textContent = "Không thấy trang ChatGPT, Grok hoặc Gemini đang hỗ trợ.";
+      statusEl.textContent = "Không thấy trang AI chat được hỗ trợ.";
+      renderCommandPanel(null, 0);
       quickExportButton.disabled = true;
       openFloatingButton.disabled = true;
       return;
@@ -77,11 +82,31 @@ async function initPopup() {
 
     const remaining = Math.max(0, planState.quota.dailyLimit - planState.quota.dailyUsed);
     statusEl.textContent = `${pageSummary.platformName}: ${pageSummary.userMessageCount} user / ${pageSummary.assistantMessageCount} AI · Free còn ${remaining}/${planState.quota.dailyLimit}`;
+    const diagnosticCount = (managerState?.diagnostics || []).filter((diagnostic) => diagnostic.platform === pageSummary.platform).length;
+    renderCommandPanel(pageSummary, diagnosticCount);
   } catch (error) {
     statusEl.textContent = "Mở trang AI chat rồi thử lại.";
+    renderCommandPanel(null, 0);
     quickExportButton.disabled = true;
     openFloatingButton.disabled = true;
   }
+}
+
+function renderCommandPanel(summary, diagnosticCount) {
+  if (!commandPanelEl) return;
+  commandPanelEl.hidden = false;
+  if (!summary?.supported) {
+    commandPanelEl.innerHTML = `<div><strong>No supported chat detected</strong><span>Open ChatGPT, Grok, Gemini, Perplexity, Claude, Copilot, Devin, or Lovable.</span></div>`;
+    return;
+  }
+
+  const plan = planState?.plan?.toUpperCase?.() || "FREE";
+  const server = managerState?.serverStatus?.online ? `Server v${managerState.serverStatus.version}` : "Server offline";
+  commandPanelEl.innerHTML = `<div>
+    <strong>${escapeHtml(summary.platformName)} detected</strong>
+    <span>${escapeHtml(summary.messageCount)} messages · ${escapeHtml(plan)} · ${escapeHtml(server)}</span>
+  </div>
+  ${diagnosticCount ? `<div class="warning">${diagnosticCount} diagnostics for this provider</div>` : ""}`;
 }
 
 async function quickExport() {

@@ -231,3 +231,23 @@ Each listing should have:
 5. Add diagnostic detail view in Manager.
 6. Add Chrome Web Store asset checklist.
 7. Add first landing page or README screenshots for GitHub.
+
+## Implementation Status - 2026-06-03
+
+- Redesigned UI surfaces are partially implemented:
+  - Popup command panel shows provider, message count, plan, server status, and diagnostic warnings.
+  - Manager Dashboard shows export counts, archive counts, failures, waiting jobs, adapter health, server status, and recent failures.
+  - Manager Diagnostics has detail JSON, upload, repair, and delete actions.
+  - Manager Adapters can fetch remote configs and request server rollback.
+- Provider support now includes ChatGPT, Grok, Gemini, Perplexity, Claude, Copilot, Devin, and Lovable.
+- Word-compatible DOC export is implemented, and Markdown/HTML/Word preserve headings, lists, blockquotes, tables, code, links, images, and assets where available.
+- Server hardening is implemented:
+  - `/api/status`
+  - paginated diagnostics/proposals
+  - adapter rollback
+  - proposal reject
+  - schema version migration
+  - adapter/diagnostic validation
+  - `npm run test:server` smoke test
+- Chrome Web Store asset checklist is implemented in `docs/11-chrome-web-store-assets.md`.
+- First local landing page is implemented in `landing.html`.

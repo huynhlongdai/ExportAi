@@ -4,8 +4,9 @@ const planSummaryEl = document.querySelector("#planSummary");
 const refreshButton = document.querySelector("#refreshButton");
 const viewButtons = [...document.querySelectorAll("[data-view]")];
 const filterButtons = [...document.querySelectorAll("[data-filter]")];
-let activeView = "tasks";
+let activeView = "dashboard";
 let activeFilter = "all";
+let selectedDiagnosticId = null;
 let managerState = {
   tasks: [],
   plan: null,
@@ -15,7 +16,8 @@ let managerState = {
   rules: [],
   adapters: []
   ,
-  settings: null
+  settings: null,
+  serverStatus: null
 };
 
 refreshButton.addEventListener("click", loadManager);
@@ -112,6 +114,19 @@ taskListEl.addEventListener("click", async (event) => {
     });
   }
 
+  if (button.dataset.action === "show-diagnostic" && diagnosticId) {
+    selectedDiagnosticId = selectedDiagnosticId === diagnosticId ? null : diagnosticId;
+    renderManager();
+    return;
+  }
+
+  if (button.dataset.action === "rollback-adapter") {
+    const platform = button.closest("[data-platform-id]")?.dataset.platformId;
+    if (platform) {
+      await chrome.runtime.sendMessage({ type: "EXPORT_AI_ROLLBACK_REMOTE_ADAPTER", platform });
+    }
+  }
+
   if (button.dataset.action === "create-link-job") {
     await createLinkJobFromForm();
   }
@@ -144,6 +159,7 @@ function renderManager() {
   renderPlanSummary();
   taskFiltersEl.hidden = activeView !== "tasks";
 
+  if (activeView === "dashboard") renderDashboard();
   if (activeView === "tasks") renderTasks();
   if (activeView === "archives") renderArchives();
   if (activeView === "diagnostics") renderDiagnostics();
@@ -152,6 +168,63 @@ function renderManager() {
   if (activeView === "presets") renderPresets();
   if (activeView === "settings") renderSettings();
   if (activeView === "plan") renderPlan();
+}
+
+function renderDashboard() {
+  const tasks = managerState.tasks || [];
+  const diagnostics = managerState.diagnostics || [];
+  const archives = managerState.archives || [];
+  const serverStatus = managerState.serverStatus || {};
+  const today = new Date().toISOString().slice(0, 10);
+  const tasksToday = tasks.filter((task) => String(task.createdAt || "").startsWith(today));
+  const failedTasks = tasks.filter((task) => task.status === "failed");
+  const waitingTasks = tasks.filter((task) => task.status === "waiting_for_tab");
+  const remoteAdapters = managerState.adapters.filter((adapter) => adapter.source === "server" || adapter.status === "remote");
+  const unhealthyAdapters = managerState.adapters.filter((adapter) =>
+    diagnostics.some((diagnostic) => diagnostic.platform === adapter.id)
+  );
+
+  taskFiltersEl.hidden = true;
+  taskListEl.innerHTML = `
+    <section class="dashboard-grid">
+      ${metricCard("Exports today", tasksToday.length, `${tasks.length} total tasks`)}
+      ${metricCard("Archives", archives.length, `${archives.reduce((total, archive) => total + (archive.messageCount || 0), 0)} messages saved`)}
+      ${metricCard("Failures", failedTasks.length, `${diagnostics.length} diagnostics`)}
+      ${metricCard("Waiting jobs", waitingTasks.length, "Link-based exports")}
+      ${metricCard("Remote adapters", remoteAdapters.length, `${managerState.adapters.length} providers`)}
+      ${metricCard("Server", serverStatus.online ? "Online" : "Offline", serverStatus.online ? `v${serverStatus.version}` : serverStatus.error || "Not connected")}
+    </section>
+    <article class="card full">
+      <div>
+        <h2>Adapter health</h2>
+        <div class="task-meta">Diagnostics by provider. Providers with failures should be tested and repaired first.</div>
+        <div class="health-grid">
+          ${managerState.adapters.map(renderAdapterHealth).join("")}
+        </div>
+      </div>
+    </article>
+    <article class="card full">
+      <div>
+        <h2>Recent failures</h2>
+        ${failedTasks.slice(0, 5).map((task) => `<div class="task-meta">${escapeHtml(task.platformName || task.platform)} · ${escapeHtml(task.title || "Conversation")} · ${escapeHtml(task.error || "")}</div>`).join("") || '<div class="task-meta">No recent failures.</div>'}
+      </div>
+    </article>
+  `;
+}
+
+function metricCard(label, value, detail) {
+  return `<article class="metric-card"><strong>${escapeHtml(value)}</strong><span>${escapeHtml(label)}</span><small>${escapeHtml(detail)}</small></article>`;
+}
+
+function renderAdapterHealth(adapter) {
+  const diagnosticCount = managerState.diagnostics.filter((diagnostic) => diagnostic.platform === adapter.id).length;
+  const serverCount = managerState.serverStatus?.adapterCounts?.[adapter.id]?.releases || 0;
+  const tone = diagnosticCount ? "failed" : serverCount ? "remote" : "";
+  return `<div class="health-item ${tone}">
+    <strong>${escapeHtml(adapter.name)}</strong>
+    <span>${escapeHtml(adapter.version || "unknown")} · ${escapeHtml(adapter.source || "bundled")}</span>
+    <small>${diagnosticCount} diagnostics · ${serverCount} server releases</small>
+  </div>`;
 }
 
 function renderSettings() {
@@ -281,7 +354,7 @@ function renderAdapter(adapter) {
     .map((group) => `<span>${escapeHtml(group.join(", "))}</span>`)
     .join("");
 
-  return `<article class="card">
+  return `<article class="card" data-platform-id="${escapeHtml(adapter.id)}">
     <div>
       <h2>${escapeHtml(adapter.name)}</h2>
       <div class="task-meta">Version: ${escapeHtml(adapter.version)} · Source: ${escapeHtml(adapter.source)} · Status: ${escapeHtml(adapter.status)}</div>
@@ -291,6 +364,9 @@ function renderAdapter(adapter) {
     </div>
     <div>
       <div class="badge${diagnosticCount ? " failed" : ""}">${diagnosticCount} diagnostics</div>
+      <div class="task-actions">
+        <button type="button" data-action="rollback-adapter">Rollback</button>
+      </div>
     </div>
   </article>`;
 }
@@ -434,12 +510,27 @@ function renderDiagnostic(record) {
     <div>
       <div class="badge failed">Local</div>
       <div class="task-actions">
+        <button type="button" data-action="show-diagnostic">Details</button>
         <button type="button" data-action="upload-diagnostic">Upload</button>
         <button type="button" data-action="request-repair">Try repair</button>
         <button type="button" data-action="delete-diagnostic">Delete</button>
       </div>
     </div>
+    ${selectedDiagnosticId === record.id ? renderDiagnosticDetails(record) : ""}
   </article>`;
+}
+
+function renderDiagnosticDetails(record) {
+  const diagnostic = record.diagnostic || {};
+  const detail = {
+    adapter: diagnostic.adapter || null,
+    selectorResults: diagnostic.selectorResults || {},
+    domSignature: diagnostic.domSignature || {},
+    privacyMode: record.privacyMode || "local",
+    serverDiagnosticId: record.serverDiagnosticId || null,
+    repairProposalId: record.repairProposalId || null
+  };
+  return `<pre class="detail-json">${escapeHtml(JSON.stringify(detail, null, 2))}</pre>`;
 }
 
 function renderArchives() {
@@ -506,7 +597,7 @@ function renderLinkJobBox() {
   return `<article class="card full">
     <div>
       <h2>Create job from chat link</h2>
-      <div class="task-meta">Paste a ChatGPT, Grok, or Gemini conversation link. The job waits until you open that link in Chrome, then exports with your logged-in session.</div>
+      <div class="task-meta">Paste a supported AI conversation link. The job waits until you open that link in Chrome, then exports with your logged-in session.</div>
       <label class="settings-field">
         <span>Chat link</span>
         <input type="url" id="linkJobUrl" placeholder="https://chatgpt.com/c/...">

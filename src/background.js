@@ -155,6 +155,10 @@ async function handleMessage(message, sender) {
       return validateLicense();
     case "EXPORT_AI_FETCH_REMOTE_ADAPTERS":
       return fetchRemoteAdapters();
+    case "EXPORT_AI_GET_SERVER_STATUS":
+      return getServerStatus();
+    case "EXPORT_AI_ROLLBACK_REMOTE_ADAPTER":
+      return rollbackRemoteAdapter(message.platform);
     case "EXPORT_AI_IMPORT_ADAPTER":
       return importAdapterConfig(message.adapter);
     case "EXPORT_AI_UPLOAD_DIAGNOSTIC":
@@ -498,7 +502,7 @@ function urlsMatch(expectedUrl, actualUrl) {
 }
 
 async function getManagerState() {
-  const [tasks, plan, presets, archives, diagnostics, rules, adapters, settings] = await Promise.all([
+  const [tasks, plan, presets, archives, diagnostics, rules, adapters, settings, serverStatus] = await Promise.all([
     getTasks(),
     getPlanState(),
     getPresets(),
@@ -506,7 +510,8 @@ async function getManagerState() {
     getDiagnostics(),
     getRules(),
     getAdapters(),
-    getSettings()
+    getSettings(),
+    getServerStatus()
   ]);
   return {
     ok: true,
@@ -517,7 +522,8 @@ async function getManagerState() {
     diagnostics,
     rules,
     adapters,
-    settings
+    settings,
+    serverStatus
   };
 }
 
@@ -629,6 +635,52 @@ async function fetchRemoteAdapters() {
 
   await chrome.storage.local.set({ [STORAGE_KEYS.adapters]: nextAdapters });
   return { ok: true, adapters: nextAdapters };
+}
+
+async function getServerStatus() {
+  try {
+    const response = await serverFetch("/api/status");
+    return response.ok
+      ? {
+          ok: true,
+          online: true,
+          version: response.version || "unknown",
+          schemaVersion: response.schemaVersion || null,
+          diagnosticsCount: response.diagnosticsCount || 0,
+          proposalsCount: response.proposalsCount || 0,
+          adapterCounts: response.adapterCounts || {},
+          checkedAt: new Date().toISOString()
+        }
+      : {
+          ok: false,
+          online: false,
+          error: response.error || "Server status failed.",
+          checkedAt: new Date().toISOString()
+        };
+  } catch (error) {
+    return {
+      ok: false,
+      online: false,
+      error: error.message,
+      checkedAt: new Date().toISOString()
+    };
+  }
+}
+
+async function rollbackRemoteAdapter(platform) {
+  if (!platform) return { ok: false, error: "Platform is required." };
+  const response = await serverFetch(`/api/adapters/${encodeURIComponent(platform)}/rollback`, {
+    method: "POST",
+    body: {}
+  });
+  if (!response.ok || !response.adapter) {
+    return { ok: false, error: response.error || "Rollback failed." };
+  }
+  return importAdapterConfig({
+    ...response.adapter,
+    status: "override",
+    source: "server-rollback"
+  });
 }
 
 async function bootstrapRemoteAdapters() {

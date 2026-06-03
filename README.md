@@ -58,6 +58,7 @@ Server mặc định chạy tại `http://127.0.0.1:8787`.
 ```bash
 npm run check
 npm run test:adapters
+npm run test:server
 ```
 
 Build manifest cho bản quảng bá riêng:
@@ -86,3 +87,8 @@ npm run build:lovable
 - [Current Implementation Notes](docs/08-current-implementation.md)
 - [Export Formats Research](docs/09-export-formats-research.md)
 - [Competitive Research and UI/Server Modernization Plan](docs/10-competitive-research-ui-server-plan.md)
+- [Chrome Web Store Asset Checklist](docs/11-chrome-web-store-assets.md)
+
+## Landing page
+
+Open `landing.html` locally for the first marketing page and screenshot planning.

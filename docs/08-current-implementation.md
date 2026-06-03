@@ -32,6 +32,9 @@
 - Export formats currently implemented: Markdown, JSON, PDF, PNG, TXT, CSV, TSV, JSONL, HTML, Word-compatible DOC.
 - Markdown/HTML/Word rendering preserves heading hierarchy, lists, blockquotes, tables, code fences, links, images, and assets where available.
 - Manager page with task list, filters, Run/Retry, Delete.
+- Manager Dashboard is implemented with export counts, archive counts, failures, waiting jobs, adapter health, server status, and recent failures.
+- Manager Diagnostics includes detail JSON, upload, repair, and delete actions.
+- Manager Adapters shows diagnostic health and can request server rollback for a provider adapter.
 - Preset defaults are stored locally: AI Archive, Human Report, Dataset, Visual Snapshot, Full Backup.
 - Popup and floating modal can apply presets to formats and metadata.
 - Manager now has Tasks, Presets, and Plan views.
@@ -63,6 +66,8 @@
 - Remote adapter fetch is implemented against the server MVP and validates selector-only configs before applying them.
 - Backend server MVP is implemented in `server/exportai-server.cjs`.
 - Server MVP supports license validation, remote adapter publish/fetch, diagnostics storage, repair proposal creation, and proposal approval.
+- Server hardening includes `/api/status`, paginated diagnostics/proposals, adapter rollback, proposal reject, schema version migration, and basic diagnostic/adapter validation.
+- `npm run test:server` runs a local smoke test for health, status, license, adapter publish/latest, diagnostics, repair proposals, and pagination.
 - Manager Settings supports server URL/license key and Pro license validation.
 - Export Settings module is implemented.
 - Background stores settings for default metadata, asset inclusion, UI wrapper cleanup, tool failure notice cleanup, default preset, and filename pattern.
@@ -86,6 +91,9 @@
 - Platform build strategy documented for full vs platform-specific extension listings.
 - Platform-specific manifest builder is implemented for ChatGPT, Grok, Gemini, Perplexity, Claude, Copilot, Devin, and Lovable variants.
 - Local adapter fixtures and a selector-count test runner are implemented for ChatGPT, Grok, Gemini, Perplexity, Claude, Copilot, Devin, and Lovable.
+- Popup command panel shows current provider, message count, plan, server status, and provider diagnostic warnings.
+- Chrome Web Store asset checklist is documented in `docs/11-chrome-web-store-assets.md`.
+- First local landing page is implemented in `landing.html`.
 
 ## Not Yet Implemented
 

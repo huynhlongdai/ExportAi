@@ -9,8 +9,11 @@ const PORT = Number(process.env.EXPORTAI_PORT || 8787);
 const ADMIN_TOKEN = process.env.EXPORTAI_ADMIN_TOKEN || "dev-admin-token";
 const DATA_DIR = path.join(__dirname, "data");
 const STORE_FILE = path.join(DATA_DIR, "store.json");
+const SERVER_VERSION = "0.2.0";
+const STORE_SCHEMA_VERSION = 2;
 
 const DEFAULT_STORE = {
+  schemaVersion: STORE_SCHEMA_VERSION,
   licenses: {
     "free-local-dev": {
       status: "active",
@@ -53,6 +56,10 @@ const server = http.createServer(async (request, response) => {
       return sendJson(response, 200, { ok: true, service: "exportai-server", time: new Date().toISOString() });
     }
 
+    if (request.method === "GET" && url.pathname === "/api/status") {
+      return handleStatus(response);
+    }
+
     if (request.method === "POST" && url.pathname === "/api/license/validate") {
       return handleLicenseValidate(response, body);
     }
@@ -68,6 +75,12 @@ const server = http.createServer(async (request, response) => {
       return handleAdapterPublish(response, adapterPublishMatch[1], body);
     }
 
+    const adapterRollbackMatch = url.pathname.match(/^\/api\/adapters\/([^/]+)\/rollback$/);
+    if (request.method === "POST" && adapterRollbackMatch) {
+      requireAdmin(request);
+      return handleAdapterRollback(response, adapterRollbackMatch[1], body);
+    }
+
     if (request.method === "POST" && url.pathname === "/api/diagnostics") {
       return handleDiagnosticCreate(response, body);
     }
@@ -75,7 +88,7 @@ const server = http.createServer(async (request, response) => {
     if (request.method === "GET" && url.pathname === "/api/diagnostics") {
       requireAdmin(request);
       const store = await readStore();
-      return sendJson(response, 200, { ok: true, diagnostics: store.diagnostics });
+      return sendJson(response, 200, { ok: true, ...paginate(store.diagnostics, url) });
     }
 
     if (request.method === "POST" && url.pathname === "/api/repair/proposals") {
@@ -85,13 +98,19 @@ const server = http.createServer(async (request, response) => {
     if (request.method === "GET" && url.pathname === "/api/repair/proposals") {
       requireAdmin(request);
       const store = await readStore();
-      return sendJson(response, 200, { ok: true, proposals: store.proposals });
+      return sendJson(response, 200, { ok: true, ...paginate(store.proposals, url, "proposals") });
     }
 
     const approveMatch = url.pathname.match(/^\/api\/repair\/proposals\/([^/]+)\/approve$/);
     if (request.method === "POST" && approveMatch) {
       requireAdmin(request);
       return handleProposalApprove(response, approveMatch[1]);
+    }
+
+    const rejectMatch = url.pathname.match(/^\/api\/repair\/proposals\/([^/]+)\/reject$/);
+    if (request.method === "POST" && rejectMatch) {
+      requireAdmin(request);
+      return handleProposalReject(response, rejectMatch[1], body);
     }
 
     return sendJson(response, 404, { ok: false, error: "Not found" });
@@ -119,6 +138,32 @@ async function handleLicenseValidate(response, body) {
     plan: license.plan || "pro",
     quota: license.quota || { dailyLimit: 999999, monthlyLimit: 999999 },
     features: license.features || DEFAULT_STORE.licenses["free-local-dev"].features
+  });
+}
+
+async function handleStatus(response) {
+  const store = await readStore();
+  const adapterCounts = Object.fromEntries(
+    Object.entries(store.adapters).map(([platform, releases]) => [
+      platform,
+      {
+        releases: releases.length,
+        published: releases.filter((release) => release.status === "published").length,
+        latestVersion: releases[0]?.version || null
+      }
+    ])
+  );
+
+  return sendJson(response, 200, {
+    ok: true,
+    service: "exportai-server",
+    version: SERVER_VERSION,
+    schemaVersion: store.schemaVersion || 1,
+    adapterCounts,
+    diagnosticsCount: store.diagnostics.length,
+    proposalsCount: store.proposals.length,
+    licenseCount: Object.keys(store.licenses).length,
+    time: new Date().toISOString()
   });
 }
 
@@ -155,12 +200,52 @@ async function handleAdapterPublish(response, platform, body) {
   return sendJson(response, 200, { ok: true, adapter });
 }
 
+async function handleAdapterRollback(response, platform, body) {
+  const store = await readStore();
+  if (!store.adapters[platform]) {
+    return sendJson(response, 404, { ok: false, error: "Unsupported platform." });
+  }
+
+  const releases = store.adapters[platform];
+  if (releases.length < 2 && !body.version) {
+    return sendJson(response, 409, { ok: false, error: "No previous adapter release to roll back to." });
+  }
+
+  const target =
+    (body.version && releases.find((release) => release.version === body.version)) ||
+    releases.find((release) => release.status !== "published");
+
+  if (!target) {
+    return sendJson(response, 404, { ok: false, error: "Rollback target not found." });
+  }
+
+  store.adapters[platform] = [
+    {
+      ...target,
+      status: "published",
+      source: "rollback",
+      rolledBackAt: new Date().toISOString(),
+      changelog: `Rolled back to ${target.version}`
+    },
+    ...releases
+      .filter((release) => release.version !== target.version)
+      .map((release) => ({ ...release, status: "rolled_back" }))
+  ];
+  await writeStore(store);
+  return sendJson(response, 200, { ok: true, adapter: store.adapters[platform][0] });
+}
+
 async function handleDiagnosticCreate(response, body) {
+  const validation = validateDiagnostic(body);
+  if (!validation.ok) {
+    return sendJson(response, 400, validation);
+  }
+
   const store = await readStore();
   const diagnostic = {
     id: createId("diag"),
     receivedAt: new Date().toISOString(),
-    ...body
+    ...validation.diagnostic
   };
   store.diagnostics.unshift(diagnostic);
   store.diagnostics = store.diagnostics.slice(0, 1000);
@@ -169,20 +254,26 @@ async function handleDiagnosticCreate(response, body) {
 }
 
 async function handleRepairProposal(response, body) {
+  const validation = validateDiagnostic(body);
+  if (!validation.ok) {
+    return sendJson(response, 400, validation);
+  }
+
   const store = await readStore();
-  const platform = body.platform;
+  const platform = validation.diagnostic.platform;
   const current = (store.adapters[platform] || [])[0];
-  const adapter = proposeAdapter(platform, body, current);
+  const adapter = proposeAdapter(platform, validation.diagnostic, current);
   const proposal = {
     id: createId("proposal"),
     status: "proposed",
     confidence: adapter ? 0.72 : 0.2,
     platform,
-    diagnosticId: body.localDiagnosticId || body.id || null,
+    diagnosticId: validation.diagnostic.localDiagnosticId || validation.diagnostic.id || null,
     reason: adapter
       ? "Generated selector-only repair proposal from diagnostic selector counts."
       : "No safe selector-only repair could be inferred from diagnostic.",
     adapter,
+    testStatus: adapter ? "not_run" : "skipped",
     createdAt: new Date().toISOString()
   };
 
@@ -208,6 +299,8 @@ async function handleProposalApprove(response, proposalId) {
 
   proposal.status = "approved";
   proposal.approvedAt = new Date().toISOString();
+  proposal.status = "published";
+  proposal.publishedAt = new Date().toISOString();
   store.adapters[proposal.platform] = [
     {
       ...proposal.adapter,
@@ -220,6 +313,20 @@ async function handleProposalApprove(response, proposalId) {
   ];
   await writeStore(store);
   return sendJson(response, 200, { ok: true, adapter: proposal.adapter });
+}
+
+async function handleProposalReject(response, proposalId, body) {
+  const store = await readStore();
+  const proposal = store.proposals.find((item) => item.id === proposalId);
+  if (!proposal) {
+    return sendJson(response, 404, { ok: false, error: "Proposal not found." });
+  }
+
+  proposal.status = "rejected";
+  proposal.rejectedAt = new Date().toISOString();
+  proposal.rejectReason = String(body.reason || "Rejected by admin.").slice(0, 300);
+  await writeStore(store);
+  return sendJson(response, 200, { ok: true, proposal });
 }
 
 function proposeAdapter(platform, diagnostic, current) {
@@ -270,6 +377,38 @@ function validateAdapter(platform, adapter) {
   };
 }
 
+function validateDiagnostic(diagnostic) {
+  if (!diagnostic || typeof diagnostic !== "object") {
+    return { ok: false, error: "Diagnostic must be a JSON object." };
+  }
+  const platform = String(diagnostic.platform || "");
+  if (!Object.keys(DEFAULT_STORE.adapters).includes(platform)) {
+    return { ok: false, error: "Diagnostic platform is unsupported." };
+  }
+  const errorType = String(diagnostic.errorType || "UNKNOWN").slice(0, 80);
+  const selectorResults = diagnostic.selectorResults && typeof diagnostic.selectorResults === "object"
+    ? Object.fromEntries(
+        Object.entries(diagnostic.selectorResults)
+          .filter(([selector, count]) => isSafeSelector(selector) && Number.isFinite(Number(count)))
+          .slice(0, 80)
+          .map(([selector, count]) => [selector, Number(count)])
+      )
+    : {};
+
+  return {
+    ok: true,
+    diagnostic: {
+      ...diagnostic,
+      platform,
+      errorType,
+      privacyMode: ["private", "debug", "support"].includes(diagnostic.privacyMode) ? diagnostic.privacyMode : "private",
+      selectorResults,
+      errorMessage: String(diagnostic.errorMessage || "").slice(0, 500),
+      capturedAt: diagnostic.capturedAt || new Date().toISOString()
+    }
+  };
+}
+
 function isSafeSelector(selector) {
   return typeof selector === "string" && selector.length > 0 && selector.length < 240 && /^[#.:[\]=\-"'\w\s>(),*^$|~+]+$/.test(selector);
 }
@@ -278,14 +417,32 @@ async function readStore() {
   await fs.mkdir(DATA_DIR, { recursive: true });
   try {
     const raw = await fs.readFile(STORE_FILE, "utf8");
-    return {
+    return migrateStore({
       ...DEFAULT_STORE,
       ...JSON.parse(raw)
-    };
+    });
   } catch {
     await writeStore(DEFAULT_STORE);
     return JSON.parse(JSON.stringify(DEFAULT_STORE));
   }
+}
+
+function migrateStore(store) {
+  return {
+    ...DEFAULT_STORE,
+    ...store,
+    schemaVersion: STORE_SCHEMA_VERSION,
+    licenses: {
+      ...DEFAULT_STORE.licenses,
+      ...(store.licenses || {})
+    },
+    adapters: {
+      ...DEFAULT_STORE.adapters,
+      ...(store.adapters || {})
+    },
+    diagnostics: Array.isArray(store.diagnostics) ? store.diagnostics : [],
+    proposals: Array.isArray(store.proposals) ? store.proposals : []
+  };
 }
 
 async function writeStore(store) {
@@ -319,6 +476,20 @@ function sendJson(response, statusCode, payload) {
   });
   if (statusCode === 204) return response.end();
   return response.end(JSON.stringify(payload));
+}
+
+function paginate(items, url, key = "diagnostics") {
+  const limit = Math.max(1, Math.min(Number(url.searchParams.get("limit")) || 50, 200));
+  const offset = Math.max(0, Number(url.searchParams.get("offset")) || 0);
+  return {
+    [key]: items.slice(offset, offset + limit),
+    page: {
+      limit,
+      offset,
+      total: items.length,
+      nextOffset: offset + limit < items.length ? offset + limit : null
+    }
+  };
 }
 
 function createId(prefix) {

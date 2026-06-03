@@ -82,6 +82,38 @@ button:disabled:hover {
   gap: 10px;
 }
 
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.metric-card {
+  display: grid;
+  gap: 4px;
+  min-height: 86px;
+  padding: 14px;
+  border: 1px solid #dfe5e1;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.metric-card strong {
+  font-size: 24px;
+}
+
+.metric-card span {
+  color: #24342e;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.metric-card small,
+.health-item small {
+  color: #607068;
+  font-size: 12px;
+}
+
 .task,
 .card {
   display: grid;
@@ -95,6 +127,42 @@ button:disabled:hover {
 
 .card.full {
   grid-template-columns: 1fr auto;
+}
+
+.health-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.health-item {
+  display: grid;
+  gap: 4px;
+  min-height: 72px;
+  padding: 10px;
+  border: 1px solid #dfe5e1;
+  border-radius: 8px;
+  background: #fbfcfa;
+}
+
+.health-item.remote {
+  border-color: #b7d3e8;
+  background: #f0f7fc;
+}
+
+.health-item.failed {
+  border-color: #f0c0ba;
+  background: #fff6f5;
+}
+
+.health-item strong {
+  font-size: 13px;
+}
+
+.health-item span {
+  color: #4a5a53;
+  font-size: 12px;
 }
 
 textarea {
@@ -168,6 +236,11 @@ textarea {
   color: #9b2d22;
 }
 
+.badge.remote {
+  background: #e8f2fb;
+  color: #205f8f;
+}
+
 .task-actions {
   display: flex;
   gap: 6px;
@@ -230,10 +303,47 @@ textarea {
   font-size: 12px;
 }
 
+.detail-json {
+  grid-column: 1 / -1;
+  max-height: 360px;
+  overflow: auto;
+  margin: 0;
+  padding: 12px;
+  border: 1px solid #d7ded8;
+  border-radius: 8px;
+  background: #101816;
+  color: #eef8f3;
+  font: 12px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  white-space: pre-wrap;
+}
+
 .empty {
   padding: 28px;
   border: 1px dashed #cdd7cf;
   border-radius: 8px;
   color: #5b6862;
   text-align: center;
+}
+
+@media (max-width: 760px) {
+  .manager-shell {
+    padding: 16px;
+  }
+
+  .dashboard-grid,
+  .health-grid,
+  .metric-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .task,
+  .card,
+  .card.full {
+    grid-template-columns: 1fr;
+  }
+
+  .task-actions {
+    justify-content: flex-start;
+    flex-wrap: wrap;
+  }
 }
