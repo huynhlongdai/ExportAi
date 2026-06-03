@@ -24,6 +24,8 @@
 - Background now also injects floating UI when supported AI chat tabs finish loading or become active.
 - Dragging the floating icon no longer triggers the click-to-open action on pointer release.
 - Floating modal uses viewport-aware placement so it opens left/right and clamps vertically instead of being clipped at screen edges.
+- Floating button has a provider/message tooltip and status dot for ready/success/error states.
+- Floating error state exposes diagnostics and fallback retry actions.
 - Manager is registered as a Chrome side panel and falls back to a manager tab when side panel opening is not available.
 - Message extraction now stores role confidence, role source, selector source, DOM order, bounding rectangle, and text hash.
 - Message extraction now prefers structured content roots like `.markdown` and preserves `<pre><code>` blocks as fenced Markdown.

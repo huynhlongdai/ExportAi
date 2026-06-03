@@ -28,7 +28,9 @@ let floatingState = {
   presets: [],
   settings: null,
   summary: null,
-  plan: null
+  plan: null,
+  statusText: "Sẵn sàng export.",
+  statusTone: "ready"
 };
 
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
@@ -1392,7 +1394,15 @@ function renderFloating() {
         </label>
         <div class="exportai-lock">Signature: ExportAI Free · locked</div>
         <div class="exportai-quota">${remaining === null ? "Loading quota..." : `Free plan: còn ${remaining}/${plan.quota.dailyLimit} exports hôm nay`}</div>
-        <div class="exportai-status" data-role="status">Sẵn sàng export.</div>
+        <div class="exportai-status" data-role="status" data-tone="${escapeHtml(floatingState.statusTone)}">${escapeHtml(floatingState.statusText)}</div>
+        ${
+          floatingState.statusTone === "error"
+            ? `<div class="exportai-repair-actions">
+                <button type="button" data-action="manager">Diagnostics</button>
+                <button type="button" data-action="export-now">Retry fallback</button>
+              </div>`
+            : ""
+        }
         <div class="exportai-actions">
           <button type="button" data-action="export-now">Export now</button>
           <button type="button" data-action="create-task">Create task</button>
@@ -1403,7 +1413,7 @@ function renderFloating() {
 
   floatingMount.innerHTML = `<style>${floatingCss()}</style>
     <div class="exportai-wrap">
-      <button class="exportai-fab" type="button" data-action="toggle" title="Export conversation">⇩AI</button>
+      <button class="exportai-fab" type="button" data-action="toggle" data-tone="${escapeHtml(floatingState.statusTone)}" title="${escapeHtml(summary.platformName)} · ${summary.messageCount} messages">⇩AI<span></span></button>
     </div>`;
   if (modal) floatingMount.innerHTML += modal;
 
@@ -1499,10 +1509,15 @@ async function createTaskFromFloating(runNow) {
 }
 
 function updateFloatingStatus(text, tone = "normal") {
+  floatingState.statusText = text;
+  floatingState.statusTone = tone;
   const status = floatingMount?.querySelector('[data-role="status"]');
-  if (!status) return;
-  status.textContent = text;
-  status.dataset.tone = tone;
+  if (status) {
+    status.textContent = text;
+    status.dataset.tone = tone;
+  }
+  const fab = floatingMount?.querySelector(".exportai-fab");
+  if (fab) fab.dataset.tone = tone;
 }
 
 async function getPlan() {
@@ -1653,6 +1668,7 @@ function floatingCss() {
       font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     }
     .exportai-fab {
+      position: relative;
       width: 54px;
       height: 44px;
       border: 1px solid #b9d7ca;
@@ -1663,6 +1679,20 @@ function floatingCss() {
       cursor: grab;
       font-weight: 800;
     }
+    .exportai-fab span {
+      position: absolute;
+      right: 5px;
+      top: 5px;
+      width: 9px;
+      height: 9px;
+      border: 2px solid #ffffff;
+      border-radius: 999px;
+      background: #17694c;
+    }
+    .exportai-fab[data-tone="normal"] span,
+    .exportai-fab[data-tone="ready"] span { background: #17694c; }
+    .exportai-fab[data-tone="success"] span { background: #17694c; }
+    .exportai-fab[data-tone="error"] span { background: #b42318; }
     .exportai-fab:active { cursor: grabbing; }
     .exportai-modal {
       position: fixed;
@@ -1753,6 +1783,23 @@ function floatingCss() {
     }
     .exportai-status[data-tone="error"] { color: #9b2d22; font-weight: 700; }
     .exportai-status[data-tone="success"] { color: #17694c; font-weight: 700; }
+    .exportai-repair-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      padding: 0 12px 10px;
+    }
+    .exportai-repair-actions button {
+      min-height: 32px;
+      border: 1px solid #efc5bf;
+      border-radius: 8px;
+      background: #fff6f5;
+      color: #9b2d22;
+      cursor: pointer;
+      font: inherit;
+      font-size: 12px;
+      font-weight: 800;
+    }
     .exportai-actions {
       display: grid;
       grid-template-columns: 1fr 1fr;

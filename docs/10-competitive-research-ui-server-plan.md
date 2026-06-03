@@ -234,8 +234,9 @@ Each listing should have:
 
 ## Implementation Status - 2026-06-03
 
-- Redesigned UI surfaces are partially implemented:
+- Redesigned UI surfaces are implemented for the current MVP:
   - Popup command panel shows provider, message count, plan, server status, and diagnostic warnings.
+  - Floating tool has provider tooltip, status dot, viewport-aware modal, presets/formats, task creation, fallback retry, and diagnostics CTA.
   - Manager Dashboard shows export counts, archive counts, failures, waiting jobs, adapter health, server status, and recent failures.
   - Manager Diagnostics has detail JSON, upload, repair, and delete actions.
   - Manager Adapters can fetch remote configs and request server rollback.
