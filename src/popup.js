@@ -1,5 +1,7 @@
 const statusEl = document.querySelector("#status");
 const commandPanelEl = document.querySelector("#commandPanel");
+const planPillEl = document.querySelector("#planPill");
+const formatCountEl = document.querySelector("#formatCount");
 const includeMetaEl = document.querySelector("#includeMeta");
 const presetSelectEl = document.querySelector("#presetSelect");
 const formatButtons = [...document.querySelectorAll("button[data-format]")];
@@ -81,7 +83,8 @@ async function initPopup() {
     }
 
     const remaining = Math.max(0, planState.quota.dailyLimit - planState.quota.dailyUsed);
-    statusEl.textContent = `${pageSummary.platformName}: ${pageSummary.userMessageCount} user / ${pageSummary.assistantMessageCount} AI · Free còn ${remaining}/${planState.quota.dailyLimit}`;
+    statusEl.textContent = `${pageSummary.platformName} detected · ${remaining}/${planState.quota.dailyLimit} exports hôm nay`;
+    if (planPillEl) planPillEl.textContent = planState.plan || "Free";
     const diagnosticCount = (managerState?.diagnostics || []).filter((diagnostic) => diagnostic.platform === pageSummary.platform).length;
     renderCommandPanel(pageSummary, diagnosticCount);
   } catch (error) {
@@ -102,10 +105,18 @@ function renderCommandPanel(summary, diagnosticCount) {
 
   const plan = planState?.plan?.toUpperCase?.() || "FREE";
   const server = managerState?.serverStatus?.online ? `Server v${managerState.serverStatus.version}` : "Server offline";
+  const remaining = planState?.quota ? Math.max(0, planState.quota.dailyLimit - planState.quota.dailyUsed) : "-";
+  const assets = summary.assetCount || 0;
   commandPanelEl.innerHTML = `<div>
     <strong>${escapeHtml(summary.platformName)} detected</strong>
-    <span>${escapeHtml(summary.messageCount)} messages · ${escapeHtml(plan)} · ${escapeHtml(server)}</span>
+    <span>${escapeHtml(summary.title || "Current AI conversation")}</span>
   </div>
+  <div class="command-grid">
+    <div class="signal"><b>${escapeHtml(summary.userMessageCount)} / ${escapeHtml(summary.assistantMessageCount)}</b><small>User / AI</small></div>
+    <div class="signal"><b>${escapeHtml(assets)}</b><small>Assets</small></div>
+    <div class="signal"><b>${escapeHtml(remaining)}</b><small>${escapeHtml(plan)} quota</small></div>
+  </div>
+  <div><span>${escapeHtml(server)}</span></div>
   ${diagnosticCount ? `<div class="warning">${diagnosticCount} diagnostics for this provider</div>` : ""}`;
 }
 
@@ -148,6 +159,7 @@ function renderFormatButtons() {
   formatButtons.forEach((button) => {
     button.classList.toggle("active", selectedFormats.has(button.dataset.format));
   });
+  if (formatCountEl) formatCountEl.textContent = `${selectedFormats.size} selected`;
   if (!presets.some((preset) => preset.id === activePresetId && sameFormats(preset.formats, [...selectedFormats]))) {
     activePresetId = "custom";
     presetSelectEl.value = "custom";

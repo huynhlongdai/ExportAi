@@ -95,6 +95,9 @@
 - Platform-specific manifest builder is implemented for ChatGPT, Grok, Gemini, Perplexity, Claude, Copilot, Devin, and Lovable variants.
 - Local adapter fixtures and a selector-count test runner are implemented for ChatGPT, Grok, Gemini, Perplexity, Claude, Copilot, Devin, and Lovable.
 - Popup command panel shows current provider, message count, plan, server status, and provider diagnostic warnings.
+- Popup was rebuilt as a compact command center with grouped document/data/visual format controls, provider status, plan badge, quota, assets, and diagnostics.
+- Floating UI was rebuilt as a draggable provider pill plus tabbed Export/Select/Repair panel with preset chips, grouped formats, scope affordances, repair actions, and viewport-aware placement.
+- Manager UI was modernized into a sidebar workspace with neutral design tokens, dashboard metrics, provider health cards, tables/cards, forms, and repair/admin sections using the same visual system.
 - Chrome Web Store asset checklist is documented in `docs/11-chrome-web-store-assets.md`.
 - First local landing page is implemented in `landing.html`.
 

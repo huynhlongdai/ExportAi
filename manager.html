@@ -8,35 +8,43 @@
   </head>
   <body>
     <main class="manager-shell">
-      <header class="topbar">
-        <div>
-          <h1>ExportAI Manager</h1>
+      <aside class="sidebar">
+        <div class="brand">
+          <h1>ExportAI</h1>
           <p id="planSummary">Đang tải quota...</p>
         </div>
-        <button id="refreshButton" type="button">Refresh</button>
-      </header>
+        <nav class="tabs" aria-label="Manager views">
+          <button class="active" data-view="dashboard" type="button">Dashboard</button>
+          <button data-view="tasks" type="button">Tasks</button>
+          <button data-view="archives" type="button">Archives</button>
+          <button data-view="diagnostics" type="button">Diagnostics</button>
+          <button data-view="repair" type="button">Repair</button>
+          <button data-view="adapters" type="button">Adapters</button>
+          <button data-view="rules" type="button">Rules</button>
+          <button data-view="presets" type="button">Presets</button>
+          <button data-view="settings" type="button">Settings</button>
+          <button data-view="plan" type="button">Plan</button>
+        </nav>
+      </aside>
 
-      <section class="tabs" aria-label="Manager views">
-        <button class="active" data-view="dashboard" type="button">Dashboard</button>
-        <button data-view="tasks" type="button">Tasks</button>
-        <button data-view="archives" type="button">Archives</button>
-        <button data-view="diagnostics" type="button">Diagnostics</button>
-        <button data-view="repair" type="button">Repair</button>
-        <button data-view="adapters" type="button">Adapters</button>
-        <button data-view="rules" type="button">Rules</button>
-        <button data-view="presets" type="button">Presets</button>
-        <button data-view="settings" type="button">Settings</button>
-        <button data-view="plan" type="button">Plan</button>
+      <section class="workspace">
+        <header class="topbar">
+          <div>
+            <h2>Conversation workspace</h2>
+            <p>Provider health, tasks, archives, and repair status.</p>
+          </div>
+          <button id="refreshButton" type="button">Refresh</button>
+        </header>
+
+        <section id="taskFilters" class="tabs compact" aria-label="Task filters">
+          <button class="active" data-filter="all" type="button">All</button>
+          <button data-filter="running" type="button">Running</button>
+          <button data-filter="success" type="button">Success</button>
+          <button data-filter="failed" type="button">Failed</button>
+        </section>
+
+        <section id="taskList" class="task-list" aria-live="polite"></section>
       </section>
-
-      <section id="taskFilters" class="tabs compact" aria-label="Task filters">
-        <button class="active" data-filter="all" type="button">All</button>
-        <button data-filter="running" type="button">Running</button>
-        <button data-filter="success" type="button">Success</button>
-        <button data-filter="failed" type="button">Failed</button>
-      </section>
-
-      <section id="taskList" class="task-list" aria-live="polite"></section>
     </main>
     <script src="src/manager/manager.js"></script>
   </body>

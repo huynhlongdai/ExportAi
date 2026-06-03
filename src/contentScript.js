@@ -29,6 +29,7 @@ let floatingState = {
   settings: null,
   summary: null,
   plan: null,
+  activeTab: "export",
   statusText: "Sẵn sàng export.",
   statusTone: "ready"
 };
@@ -1360,49 +1361,75 @@ function renderFloating() {
   const remaining = plan
     ? Math.max(0, plan.quota.dailyLimit - plan.quota.dailyUsed)
     : null;
+  const activeTab = floatingState.activeTab || "export";
+  const serverLabel = floatingState.settings?.serverUrl ? "Server configured" : "Local mode";
   const modal = floatingState.open
     ? `<section class="exportai-modal" data-role="modal">
         <header>
           <div>
             <strong>ExportAI</strong>
-            <span>${escapeHtml(summary.platformName)} · ${summary.userMessageCount} user / ${summary.assistantMessageCount} AI</span>
+            <span>${escapeHtml(summary.platformName)} · ${summary.userMessageCount} user / ${summary.assistantMessageCount} AI · ${summary.assetCount || 0} assets</span>
           </div>
           <div class="exportai-window-actions">
             <button type="button" data-action="minimize" title="Minimize">_</button>
             <button type="button" data-action="close" title="Close">x</button>
           </div>
         </header>
-        <div class="exportai-title">${escapeHtml(summary.title)}</div>
-        <div class="exportai-formats">
-          ${EXPORT_FORMATS.map((format) => formatButton(format.id, format.label)).join("")}
+        <div class="exportai-tabs" role="tablist">
+          ${floatingTabButton("export", "Export", activeTab)}
+          ${floatingTabButton("select", "Select", activeTab)}
+          ${floatingTabButton("repair", "Repair", activeTab)}
         </div>
-        <label class="exportai-field">
-          <span>Preset</span>
-          <select data-action="preset">
-            <option value="custom">Custom formats</option>
-            ${floatingState.presets
-              .map(
-                (preset) =>
-                  `<option value="${escapeHtml(preset.id)}" ${floatingState.activePresetId === preset.id ? "selected" : ""}>${escapeHtml(preset.name)}</option>`
-              )
-              .join("")}
-          </select>
-        </label>
-        <label class="exportai-check">
-          <input type="checkbox" data-action="toggle-meta" ${floatingState.includeMeta ? "checked" : ""}>
-          <span>Metadata</span>
-        </label>
-        <div class="exportai-lock">Signature: ExportAI Free · locked</div>
-        <div class="exportai-quota">${remaining === null ? "Loading quota..." : `Free plan: còn ${remaining}/${plan.quota.dailyLimit} exports hôm nay`}</div>
-        <div class="exportai-status" data-role="status" data-tone="${escapeHtml(floatingState.statusTone)}">${escapeHtml(floatingState.statusText)}</div>
+        <div class="exportai-title">${escapeHtml(summary.title)}</div>
         ${
-          floatingState.statusTone === "error"
-            ? `<div class="exportai-repair-actions">
-                <button type="button" data-action="manager">Diagnostics</button>
-                <button type="button" data-action="export-now">Retry fallback</button>
+          activeTab === "export"
+            ? `<div class="exportai-pane">
+                <div class="exportai-preset-row">
+                  ${floatingPresetChips()}
+                </div>
+                <div class="exportai-scope">
+                  <button type="button" class="active">All</button>
+                  <button type="button" disabled>AI only</button>
+                  <button type="button" disabled>Selected</button>
+                </div>
+                ${floatingFormatGroups()}
+                <label class="exportai-check">
+                  <input type="checkbox" data-action="toggle-meta" ${floatingState.includeMeta ? "checked" : ""}>
+                  <span>Include metadata</span>
+                </label>
               </div>`
             : ""
         }
+        ${
+          activeTab === "select"
+            ? `<div class="exportai-pane">
+                <div class="exportai-metrics">
+                  <div><b>${escapeHtml(summary.messageCount)}</b><small>Messages</small></div>
+                  <div><b>${escapeHtml(summary.userMessageCount)}</b><small>User</small></div>
+                  <div><b>${escapeHtml(summary.assistantMessageCount)}</b><small>AI</small></div>
+                </div>
+                <div class="exportai-note">Current scope: full conversation.</div>
+              </div>`
+            : ""
+        }
+        ${
+          activeTab === "repair"
+            ? `<div class="exportai-pane">
+                <div class="exportai-metrics">
+                  <div><b>${escapeHtml(summary.platformName)}</b><small>Provider</small></div>
+                  <div><b>${escapeHtml(serverLabel)}</b><small>Repair server</small></div>
+                  <div><b>${escapeHtml(floatingState.statusTone)}</b><small>Status</small></div>
+                </div>
+                <div class="exportai-repair-actions">
+                  <button type="button" data-action="manager">Diagnostics</button>
+                  <button type="button" data-action="export-now">Retry fallback</button>
+                </div>
+              </div>`
+            : ""
+        }
+        <div class="exportai-lock">Signature: ExportAI Free · locked</div>
+        <div class="exportai-quota">${remaining === null ? "Loading quota..." : `Free plan: còn ${remaining}/${plan.quota.dailyLimit} exports hôm nay`}</div>
+        <div class="exportai-status" data-role="status" data-tone="${escapeHtml(floatingState.statusTone)}">${escapeHtml(floatingState.statusText)}</div>
         <div class="exportai-actions">
           <button type="button" data-action="export-now">Export now</button>
           <button type="button" data-action="create-task">Create task</button>
@@ -1413,7 +1440,7 @@ function renderFloating() {
 
   floatingMount.innerHTML = `<style>${floatingCss()}</style>
     <div class="exportai-wrap">
-      <button class="exportai-fab" type="button" data-action="toggle" data-tone="${escapeHtml(floatingState.statusTone)}" title="${escapeHtml(summary.platformName)} · ${summary.messageCount} messages">⇩AI<span></span></button>
+      <button class="exportai-fab" type="button" data-action="toggle" data-tone="${escapeHtml(floatingState.statusTone)}" title="${escapeHtml(summary.platformName)} · ${summary.messageCount} messages"><b>ExportAI</b><small>${escapeHtml(summary.platformName)}</small><span></span></button>
     </div>`;
   if (modal) floatingMount.innerHTML += modal;
 
@@ -1425,6 +1452,38 @@ function renderFloating() {
 function formatButton(format, label) {
   const active = floatingState.selectedFormats.has(format);
   return `<button type="button" class="${active ? "active" : ""}" data-format="${format}">${label}</button>`;
+}
+
+function floatingTabButton(tab, label, activeTab) {
+  return `<button type="button" class="${activeTab === tab ? "active" : ""}" data-floating-tab="${escapeHtml(tab)}">${escapeHtml(label)}</button>`;
+}
+
+function floatingPresetChips() {
+  const presets = floatingState.presets || [];
+  return [
+    `<button type="button" class="${floatingState.activePresetId === "custom" ? "active" : ""}" data-preset-chip="custom">Custom</button>`,
+    ...presets.map(
+      (preset) =>
+        `<button type="button" class="${floatingState.activePresetId === preset.id ? "active" : ""}" data-preset-chip="${escapeHtml(preset.id)}">${escapeHtml(preset.name)}</button>`
+    )
+  ].join("");
+}
+
+function floatingFormatGroups() {
+  const groups = [
+    ["Document", ["markdown", "word", "pdf", "txt"]],
+    ["AI data", ["json", "jsonl", "csv", "tsv"]],
+    ["Visual", ["html", "png"]]
+  ];
+  const labels = Object.fromEntries(EXPORT_FORMATS.map((format) => [format.id, format.label]));
+  return groups
+    .map(
+      ([name, formats]) => `<div class="exportai-format-group">
+        <div>${escapeHtml(name)}</div>
+        <div class="exportai-formats">${formats.map((format) => formatButton(format, labels[format] || format)).join("")}</div>
+      </div>`
+    )
+    .join("");
 }
 
 function wireFloatingEvents() {
@@ -1449,8 +1508,26 @@ function wireFloatingEvents() {
   floatingMount.querySelector('[data-action="manager"]')?.addEventListener("click", () => {
     chrome.runtime.sendMessage({ type: "EXPORT_AI_OPEN_MANAGER" });
   });
+  floatingMount.querySelectorAll("[data-floating-tab]").forEach((button) => {
+    button.addEventListener("click", () => {
+      floatingState.activeTab = button.dataset.floatingTab || "export";
+      renderFloating();
+    });
+  });
   floatingMount.querySelector('[data-action="toggle-meta"]')?.addEventListener("change", (event) => {
     floatingState.includeMeta = event.currentTarget.checked;
+  });
+  floatingMount.querySelectorAll("[data-preset-chip]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const presetId = button.dataset.presetChip;
+      const preset = floatingState.presets.find((item) => item.id === presetId);
+      if (!preset) {
+        floatingState.activePresetId = "custom";
+        renderFloating();
+        return;
+      }
+      applyFloatingPreset(preset);
+    });
   });
   floatingMount.querySelector('[data-action="preset"]')?.addEventListener("change", (event) => {
     const presetId = event.currentTarget.value;
@@ -1592,7 +1669,7 @@ function enableDrag(wrap) {
       moved = true;
     }
     if (!moved) return;
-    const left = clamp(event.clientX - offsetX, 8, window.innerWidth - 76);
+    const left = clamp(event.clientX - offsetX, 8, window.innerWidth - 116);
     const top = clamp(event.clientY - offsetY, 8, window.innerHeight - 76);
     wrap.style.left = `${left}px`;
     wrap.style.top = `${top}px`;
@@ -1628,7 +1705,7 @@ function placeFloatingModal() {
   if (!wrap || !modal) return;
 
   const fabRect = wrap.getBoundingClientRect();
-  const modalWidth = Math.min(330, window.innerWidth - 28);
+  const modalWidth = Math.min(360, window.innerWidth - 28);
   const estimatedHeight = Math.min(520, window.innerHeight - 28);
   const gap = 10;
   const spaceRight = window.innerWidth - fabRect.right;
@@ -1649,7 +1726,7 @@ async function restoreFloatingPosition() {
   const positions = await getStored(FLOATING_POSITION_KEY, {});
   const position = positions[location.hostname];
   if (!wrap || !position) return;
-  const left = clamp(parseCssPixel(position.left, window.innerWidth - 84), 8, window.innerWidth - 76);
+  const left = clamp(parseCssPixel(position.left, window.innerWidth - 124), 8, window.innerWidth - 116);
   const top = clamp(parseCssPixel(position.top, window.innerHeight - 120), 8, window.innerHeight - 76);
   wrap.style.left = `${left}px`;
   wrap.style.top = `${top}px`;
@@ -1664,44 +1741,66 @@ function floatingCss() {
       right: 18px;
       bottom: 94px;
       z-index: 2147483647;
-      color: #16201c;
+      color: #14171f;
       font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     }
+    .exportai-wrap *,
+    .exportai-modal * { box-sizing: border-box; letter-spacing: 0; }
     .exportai-fab {
+      display: grid;
+      gap: 1px;
       position: relative;
-      width: 54px;
+      min-width: 86px;
       height: 44px;
-      border: 1px solid #b9d7ca;
+      padding: 7px 28px 7px 10px;
+      border: 1px solid #d9dee8;
       border-radius: 8px;
       background: #ffffff;
-      color: #17694c;
-      box-shadow: 0 10px 26px rgba(22, 32, 28, 0.16);
+      color: #14171f;
+      box-shadow: 0 10px 26px rgba(20, 23, 31, 0.16);
       cursor: grab;
+      text-align: left;
+    }
+    .exportai-fab b {
+      display: block;
+      font-size: 12px;
+      font-weight: 900;
+      line-height: 1.1;
+    }
+    .exportai-fab small {
+      display: block;
+      max-width: 58px;
+      overflow: hidden;
+      color: #596273;
+      font-size: 10px;
       font-weight: 800;
+      line-height: 1.1;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
     .exportai-fab span {
       position: absolute;
-      right: 5px;
-      top: 5px;
-      width: 9px;
-      height: 9px;
+      right: 9px;
+      top: 9px;
+      width: 10px;
+      height: 10px;
       border: 2px solid #ffffff;
       border-radius: 999px;
-      background: #17694c;
+      background: #168a57;
     }
     .exportai-fab[data-tone="normal"] span,
-    .exportai-fab[data-tone="ready"] span { background: #17694c; }
-    .exportai-fab[data-tone="success"] span { background: #17694c; }
-    .exportai-fab[data-tone="error"] span { background: #b42318; }
+    .exportai-fab[data-tone="ready"] span { background: #168a57; }
+    .exportai-fab[data-tone="success"] span { background: #168a57; }
+    .exportai-fab[data-tone="error"] span { background: #c0362c; }
     .exportai-fab:active { cursor: grabbing; }
     .exportai-modal {
       position: fixed;
-      width: min(330px, calc(100vw - 28px));
+      width: min(360px, calc(100vw - 28px));
       max-height: calc(100vh - 28px);
-      border: 1px solid #dbe4dd;
+      border: 1px solid #d9dee8;
       border-radius: 8px;
-      background: #fbfcfa;
-      box-shadow: 0 18px 42px rgba(22, 32, 28, 0.18);
+      background: #ffffff;
+      box-shadow: 0 18px 42px rgba(20, 23, 31, 0.18);
       overflow: auto;
       z-index: 2147483647;
     }
@@ -1711,106 +1810,187 @@ function floatingCss() {
       justify-content: space-between;
       gap: 12px;
       padding: 12px;
-      border-bottom: 1px solid #e2e8e3;
+      border-bottom: 1px solid #e6eaf1;
     }
     .exportai-modal strong { display: block; font-size: 15px; }
-    .exportai-modal span { color: #607068; font-size: 12px; }
+    .exportai-modal span { color: #596273; font-size: 12px; }
     .exportai-window-actions { display: flex; gap: 4px; }
     .exportai-window-actions button {
       width: 28px;
       height: 28px;
-      border: 1px solid #d7ded8;
+      border: 1px solid #d9dee8;
       border-radius: 6px;
       background: #ffffff;
+      color: #14171f;
       cursor: pointer;
+    }
+    .exportai-tabs {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+      padding: 10px 12px;
+      border-bottom: 1px solid #e6eaf1;
+      background: #f7f8fb;
+    }
+    .exportai-tabs button,
+    .exportai-scope button,
+    .exportai-preset-row button {
+      min-height: 30px;
+      border: 1px solid #d9dee8;
+      border-radius: 8px;
+      background: #ffffff;
+      color: #596273;
+      cursor: pointer;
+      font: inherit;
+      font-size: 12px;
+      font-weight: 850;
+    }
+    .exportai-tabs button.active,
+    .exportai-scope button.active,
+    .exportai-preset-row button.active {
+      border-color: #2563eb;
+      background: #eaf1ff;
+      color: #1747a6;
+    }
+    .exportai-scope button:disabled {
+      cursor: not-allowed;
+      opacity: 0.5;
     }
     .exportai-title {
       padding: 12px;
-      border-bottom: 1px solid #e2e8e3;
+      border-bottom: 1px solid #e6eaf1;
       font-size: 13px;
       font-weight: 700;
       line-height: 1.35;
       max-height: 54px;
       overflow: hidden;
     }
+    .exportai-pane {
+      display: grid;
+      gap: 10px;
+      padding: 12px;
+      border-bottom: 1px solid #e6eaf1;
+    }
+    .exportai-preset-row {
+      display: flex;
+      gap: 6px;
+      overflow-x: auto;
+      padding-bottom: 2px;
+    }
+    .exportai-preset-row button {
+      flex: 0 0 auto;
+      padding: 0 9px;
+    }
+    .exportai-scope {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+    }
+    .exportai-format-group {
+      display: grid;
+      gap: 6px;
+    }
+    .exportai-format-group > div:first-child {
+      color: #596273;
+      font-size: 10px;
+      font-weight: 900;
+      text-transform: uppercase;
+    }
     .exportai-formats {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
-      gap: 8px;
-      padding: 12px;
+      gap: 7px;
     }
     .exportai-formats button,
     .exportai-actions button {
-      border: 1px solid #d7ded8;
+      border: 1px solid #d9dee8;
       border-radius: 8px;
       background: #ffffff;
-      color: #16201c;
+      color: #14171f;
       cursor: pointer;
       font: inherit;
       font-size: 12px;
-      font-weight: 800;
+      font-weight: 850;
       min-height: 36px;
     }
     .exportai-formats button.active {
-      border-color: #237a5a;
-      background: #eaf3ee;
-      color: #17694c;
+      border-color: #2563eb;
+      background: #eaf1ff;
+      color: #1747a6;
     }
     .exportai-check,
-    .exportai-field,
     .exportai-lock,
     .exportai-quota,
     .exportai-status {
       display: flex;
       gap: 8px;
-      padding: 0 12px 10px;
-      color: #52625b;
+      padding: 0 12px 8px;
+      color: #596273;
       font-size: 12px;
     }
-    .exportai-field {
+    .exportai-check { padding: 0; color: #343b49; }
+    .exportai-status[data-tone="error"] { color: #c0362c; font-weight: 800; }
+    .exportai-status[data-tone="success"] { color: #168a57; font-weight: 800; }
+    .exportai-metrics {
       display: grid;
-      gap: 6px;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
     }
-    .exportai-field select {
-      width: 100%;
-      min-height: 34px;
-      border: 1px solid #d7ded8;
+    .exportai-metrics div {
+      min-height: 58px;
+      padding: 8px;
+      border: 1px solid #d9dee8;
       border-radius: 8px;
-      background: #ffffff;
-      color: #16201c;
-      font: inherit;
-      padding: 6px 8px;
+      background: #f7f8fb;
     }
-    .exportai-status[data-tone="error"] { color: #9b2d22; font-weight: 700; }
-    .exportai-status[data-tone="success"] { color: #17694c; font-weight: 700; }
+    .exportai-metrics b {
+      display: block;
+      overflow: hidden;
+      font-size: 13px;
+      line-height: 1.2;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .exportai-metrics small {
+      display: block;
+      margin-top: 4px;
+      color: #596273;
+      font-size: 10px;
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+    .exportai-note {
+      color: #596273;
+      font-size: 12px;
+      line-height: 1.4;
+    }
     .exportai-repair-actions {
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 8px;
-      padding: 0 12px 10px;
     }
     .exportai-repair-actions button {
       min-height: 32px;
-      border: 1px solid #efc5bf;
+      border: 1px solid #f1d59d;
       border-radius: 8px;
-      background: #fff6f5;
-      color: #9b2d22;
+      background: #fff8e8;
+      color: #7a4d05;
       cursor: pointer;
       font: inherit;
       font-size: 12px;
-      font-weight: 800;
+      font-weight: 850;
     }
     .exportai-actions {
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 8px;
       padding: 12px;
-      border-top: 1px solid #e2e8e3;
+      border-top: 1px solid #e6eaf1;
     }
     .exportai-actions button:first-child {
       grid-column: span 2;
-      background: #17694c;
-      border-color: #17694c;
+      background: #2563eb;
+      border-color: #2563eb;
       color: #ffffff;
     }
   `;

@@ -13,51 +13,41 @@
           <h1>ExportAI</h1>
           <p id="status">Sẵn sàng export hội thoại AI.</p>
         </div>
+        <span class="plan-pill" id="planPill">Free</span>
       </header>
 
       <section id="commandPanel" class="command-panel" hidden></section>
 
-      <section class="formats" aria-label="Định dạng export">
-        <button class="active" data-format="markdown" type="button">
-          <span>MD</span>
-          <strong>Markdown</strong>
-        </button>
-        <button data-format="json" type="button">
-          <span>{}</span>
-          <strong>JSON</strong>
-        </button>
-        <button data-format="pdf" type="button">
-          <span>PDF</span>
-          <strong>PDF</strong>
-        </button>
-        <button data-format="png" type="button">
-          <span>PNG</span>
-          <strong>Ảnh</strong>
-        </button>
-        <button data-format="txt" type="button">
-          <span>TXT</span>
-          <strong>Text</strong>
-        </button>
-        <button data-format="csv" type="button">
-          <span>CSV</span>
-          <strong>CSV</strong>
-        </button>
-        <button data-format="tsv" type="button">
-          <span>TSV</span>
-          <strong>TSV</strong>
-        </button>
-        <button data-format="jsonl" type="button">
-          <span>JL</span>
-          <strong>JSONL</strong>
-        </button>
-        <button data-format="html" type="button">
-          <span>HTML</span>
-          <strong>HTML</strong>
-        </button>
-        <button data-format="word" type="button">
-          <span>DOC</span>
-          <strong>Word</strong>
-        </button>
+      <section class="format-panel" aria-label="Định dạng export">
+        <div class="section-title">
+          <span>Formats</span>
+          <small id="formatCount">1 selected</small>
+        </div>
+        <div class="format-group">
+          <div class="group-label">Document</div>
+          <div class="format-row">
+            <button class="active" data-format="markdown" type="button"><span>MD</span><strong>Markdown</strong></button>
+            <button data-format="word" type="button"><span>DOC</span><strong>Word</strong></button>
+            <button data-format="pdf" type="button"><span>PDF</span><strong>PDF</strong></button>
+            <button data-format="txt" type="button"><span>TXT</span><strong>Text</strong></button>
+          </div>
+        </div>
+        <div class="format-group">
+          <div class="group-label">AI data</div>
+          <div class="format-row">
+            <button data-format="json" type="button"><span>{}</span><strong>JSON</strong></button>
+            <button data-format="jsonl" type="button"><span>JL</span><strong>JSONL</strong></button>
+            <button data-format="csv" type="button"><span>CSV</span><strong>CSV</strong></button>
+            <button data-format="tsv" type="button"><span>TSV</span><strong>TSV</strong></button>
+          </div>
+        </div>
+        <div class="format-group">
+          <div class="group-label">Visual</div>
+          <div class="format-row">
+            <button data-format="html" type="button"><span>WEB</span><strong>HTML</strong></button>
+            <button data-format="png" type="button"><span>IMG</span><strong>Ảnh PNG</strong></button>
+          </div>
+        </div>
       </section>
 
       <label class="field">
@@ -72,7 +62,7 @@
 
       <div class="actions">
         <button id="quickExport" type="button">Export now</button>
-        <button id="openFloating" type="button">Floating tool</button>
+        <button id="openFloating" type="button">Floating</button>
         <button id="openManager" type="button">Manager</button>
       </div>
     </main>
