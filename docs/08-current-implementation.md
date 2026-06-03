@@ -69,6 +69,7 @@
 - Remote JavaScript is never executed; this is designed as the safe local precursor to a server-provided AI repair config.
 - Remote adapter fetch is implemented against the server MVP and validates selector-only configs before applying them.
 - Backend server MVP is implemented in `server/exportai-server.cjs`.
+- Server Admin UI is available at `/admin` with dashboard metrics, diagnostics search/filter, repair proposal approve/reject, adapter publish/rollback, license validation, and token settings.
 - Server MVP supports license validation, remote adapter publish/fetch, diagnostics storage, repair proposal creation, and proposal approval.
 - Server hardening includes `/api/status`, paginated diagnostics/proposals, adapter rollback, proposal reject, schema version migration, and basic diagnostic/adapter validation.
 - `npm run test:server` runs a local smoke test for health, status, license, adapter publish/latest/rollback, diagnostics, repair proposals, approve/reject, and pagination.
@@ -109,7 +110,6 @@
 - IndexedDB archive for very large transcript storage; current archive uses compact `chrome.storage.local`.
 - PDF/PNG re-export from archive via offscreen rendering.
 - Fully automated AI code repair agent with model calls and DOM fixture execution; current server creates selector-only repair proposals.
-- Admin dashboard UI; current admin operations are HTTP endpoints.
 - Chrome Web Store packaging/signing workflow.
 
 ## Important Product Direction

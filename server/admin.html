@@ -1,0 +1,991 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ExportAI Server Admin</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: #f7f8fb;
+        --surface: #ffffff;
+        --soft: #f1f4f9;
+        --text: #14171f;
+        --muted: #596273;
+        --border: #d9dee8;
+        --primary: #2563eb;
+        --primary-soft: #eaf1ff;
+        --success: #168a57;
+        --warning: #b7791f;
+        --danger: #c0362c;
+        --pro: #7c3aed;
+        font-family:
+          Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+          sans-serif;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        color: var(--text);
+        background: var(--bg);
+      }
+
+      .shell {
+        display: grid;
+        grid-template-columns: 236px minmax(0, 1fr);
+        min-height: 100vh;
+      }
+
+      .sidebar {
+        position: sticky;
+        top: 0;
+        align-self: start;
+        display: grid;
+        gap: 18px;
+        min-height: 100vh;
+        padding: 20px 14px;
+        border-right: 1px solid var(--border);
+        background: var(--surface);
+      }
+
+      .brand {
+        padding: 4px 6px 10px;
+      }
+
+      h1,
+      h2,
+      h3 {
+        margin: 0;
+        letter-spacing: 0;
+      }
+
+      h1 {
+        font-size: 22px;
+        line-height: 1.15;
+      }
+
+      h2 {
+        font-size: 20px;
+      }
+
+      h3 {
+        font-size: 15px;
+      }
+
+      p {
+        margin: 6px 0 0;
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.4;
+      }
+
+      nav {
+        display: grid;
+        gap: 6px;
+      }
+
+      button,
+      input,
+      select,
+      textarea {
+        font: inherit;
+      }
+
+      button {
+        min-height: 34px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background: #ffffff;
+        color: var(--text);
+        cursor: pointer;
+        font-size: 13px;
+        font-weight: 800;
+        padding: 8px 11px;
+      }
+
+      button:hover,
+      button.active {
+        border-color: var(--primary);
+        background: var(--primary-soft);
+        color: #1747a6;
+      }
+
+      button:disabled {
+        cursor: not-allowed;
+        opacity: 0.55;
+      }
+
+      nav button {
+        width: 100%;
+        text-align: left;
+      }
+
+      .workspace {
+        display: grid;
+        align-content: start;
+        gap: 16px;
+        padding: 22px;
+      }
+
+      .topbar,
+      .panel,
+      .card,
+      .metric,
+      .toolbar,
+      .notice {
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background: var(--surface);
+        box-shadow: 0 6px 18px rgba(20, 23, 31, 0.04);
+      }
+
+      .topbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 16px;
+      }
+
+      .status-line {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      .pill,
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        min-height: 24px;
+        padding: 0 8px;
+        border-radius: 999px;
+        background: var(--soft);
+        color: #343b49;
+        font-size: 12px;
+        font-weight: 850;
+      }
+
+      .pill.online,
+      .badge.published {
+        background: #e8f7ef;
+        color: var(--success);
+      }
+
+      .pill.offline,
+      .badge.failed,
+      .badge.rejected {
+        background: #fff1ef;
+        color: var(--danger);
+      }
+
+      .badge.proposed,
+      .badge.approved {
+        background: #fff8e8;
+        color: #7a4d05;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 12px;
+      }
+
+      .metric {
+        display: grid;
+        gap: 5px;
+        min-height: 92px;
+        padding: 14px;
+      }
+
+      .metric strong {
+        font-size: 26px;
+        line-height: 1.1;
+      }
+
+      .metric span {
+        color: #252b37;
+        font-size: 12px;
+        font-weight: 900;
+        text-transform: uppercase;
+      }
+
+      .metric small {
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .toolbar {
+        display: grid;
+        grid-template-columns: minmax(220px, 1fr) repeat(3, minmax(130px, 0.4fr));
+        gap: 10px;
+        padding: 12px;
+      }
+
+      label {
+        display: grid;
+        gap: 6px;
+        color: #343b49;
+        font-size: 12px;
+        font-weight: 800;
+      }
+
+      input,
+      select,
+      textarea {
+        width: 100%;
+        min-height: 38px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background: #ffffff;
+        color: var(--text);
+        padding: 8px 10px;
+      }
+
+      textarea {
+        min-height: 170px;
+        font: 12px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        resize: vertical;
+      }
+
+      input:focus,
+      select:focus,
+      textarea:focus {
+        border-color: var(--primary);
+        outline: 2px solid rgba(37, 99, 235, 0.16);
+      }
+
+      .panel {
+        display: grid;
+        gap: 12px;
+        padding: 14px;
+      }
+
+      .list {
+        display: grid;
+        gap: 12px;
+      }
+
+      .card {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 14px;
+        padding: 14px;
+      }
+
+      .meta {
+        margin-top: 6px;
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.4;
+        word-break: break-word;
+      }
+
+      .chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-top: 10px;
+      }
+
+      .chip {
+        display: inline-flex;
+        align-items: center;
+        min-height: 24px;
+        max-width: 420px;
+        overflow: hidden;
+        padding: 0 8px;
+        border-radius: 999px;
+        background: var(--soft);
+        color: #343b49;
+        font-size: 12px;
+        font-weight: 800;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        gap: 6px;
+        margin-top: 10px;
+      }
+
+      .actions button {
+        min-height: 30px;
+        padding: 6px 8px;
+        font-size: 12px;
+      }
+
+      .danger {
+        border-color: #efbbb5;
+        background: #fff1ef;
+        color: var(--danger);
+      }
+
+      pre {
+        max-height: 360px;
+        overflow: auto;
+        margin: 0;
+        padding: 12px;
+        border: 1px solid #252b37;
+        border-radius: 8px;
+        background: #10131a;
+        color: #f4f7fb;
+        font: 12px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        white-space: pre-wrap;
+      }
+
+      .split {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(320px, 0.6fr);
+        gap: 12px;
+      }
+
+      .notice {
+        padding: 14px;
+        color: var(--muted);
+        text-align: center;
+      }
+
+      .hidden {
+        display: none !important;
+      }
+
+      @media (max-width: 960px) {
+        .shell {
+          grid-template-columns: 1fr;
+        }
+
+        .sidebar {
+          position: static;
+          min-height: auto;
+          border-right: 0;
+          border-bottom: 1px solid var(--border);
+        }
+
+        nav {
+          display: flex;
+          flex-wrap: wrap;
+        }
+
+        nav button {
+          width: auto;
+        }
+
+        .grid,
+        .toolbar,
+        .split {
+          grid-template-columns: 1fr 1fr;
+        }
+      }
+
+      @media (max-width: 680px) {
+        .workspace {
+          padding: 16px;
+        }
+
+        .grid,
+        .toolbar,
+        .split,
+        .card {
+          grid-template-columns: 1fr;
+        }
+
+        .actions {
+          justify-content: flex-start;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="shell">
+      <aside class="sidebar">
+        <div class="brand">
+          <h1>ExportAI Admin</h1>
+          <p>Server repair, diagnostics, and adapter control.</p>
+        </div>
+        <nav aria-label="Admin views">
+          <button class="active" data-view="dashboard" type="button">Dashboard</button>
+          <button data-view="diagnostics" type="button">Diagnostics</button>
+          <button data-view="proposals" type="button">Repair proposals</button>
+          <button data-view="adapters" type="button">Adapters</button>
+          <button data-view="license" type="button">License/API</button>
+          <button data-view="settings" type="button">Settings</button>
+        </nav>
+      </aside>
+
+      <section class="workspace">
+        <header class="topbar">
+          <div>
+            <h2 id="viewTitle">Dashboard</h2>
+            <p id="viewSubtitle">Operational status for the local ExportAI repair server.</p>
+          </div>
+          <div class="status-line">
+            <span id="serverPill" class="pill offline">Offline</span>
+            <button id="refreshButton" type="button">Refresh</button>
+          </div>
+        </header>
+
+        <section class="panel">
+          <div class="split">
+            <label>
+              Admin token
+              <input id="adminToken" type="password" placeholder="dev-admin-token" autocomplete="off" />
+            </label>
+            <label>
+              Server base URL
+              <input id="serverBaseUrl" type="url" value="" />
+            </label>
+          </div>
+          <div class="status-line">
+            <button id="saveSettingsButton" type="button">Save settings</button>
+            <button id="testTokenButton" type="button">Test admin access</button>
+            <span id="settingsStatus" class="meta"></span>
+          </div>
+        </section>
+
+        <section id="dashboardView" data-panel="dashboard"></section>
+        <section id="diagnosticsView" data-panel="diagnostics" class="hidden"></section>
+        <section id="proposalsView" data-panel="proposals" class="hidden"></section>
+        <section id="adaptersView" data-panel="adapters" class="hidden"></section>
+        <section id="licenseView" data-panel="license" class="hidden"></section>
+        <section id="settingsView" data-panel="settings" class="hidden"></section>
+      </section>
+    </main>
+
+    <script>
+      const providers = ["chatgpt", "grok", "gemini", "perplexity", "claude", "copilot", "devin", "lovable"];
+      const state = {
+        activeView: "dashboard",
+        status: null,
+        diagnostics: [],
+        proposals: [],
+        adapterDetails: {},
+        filter: "",
+        platform: "all"
+      };
+
+      const els = {
+        viewTitle: document.querySelector("#viewTitle"),
+        viewSubtitle: document.querySelector("#viewSubtitle"),
+        serverPill: document.querySelector("#serverPill"),
+        refreshButton: document.querySelector("#refreshButton"),
+        adminToken: document.querySelector("#adminToken"),
+        serverBaseUrl: document.querySelector("#serverBaseUrl"),
+        saveSettingsButton: document.querySelector("#saveSettingsButton"),
+        testTokenButton: document.querySelector("#testTokenButton"),
+        settingsStatus: document.querySelector("#settingsStatus")
+      };
+
+      document.querySelectorAll("[data-view]").forEach((button) => {
+        button.addEventListener("click", () => {
+          state.activeView = button.dataset.view;
+          document.querySelectorAll("[data-view]").forEach((item) => item.classList.toggle("active", item === button));
+          render();
+        });
+      });
+
+      els.refreshButton.addEventListener("click", loadAll);
+      els.saveSettingsButton.addEventListener("click", saveSettings);
+      els.testTokenButton.addEventListener("click", testAdminAccess);
+
+      loadSettings();
+      loadAll();
+
+      async function loadAll() {
+        await loadStatus();
+        await Promise.all([loadDiagnostics(), loadProposals(), loadAdapterDetails()]);
+        render();
+      }
+
+      function loadSettings() {
+        els.adminToken.value = localStorage.getItem("exportai.adminToken") || "dev-admin-token";
+        els.serverBaseUrl.value = localStorage.getItem("exportai.serverBaseUrl") || location.origin;
+      }
+
+      function saveSettings() {
+        localStorage.setItem("exportai.adminToken", els.adminToken.value.trim());
+        localStorage.setItem("exportai.serverBaseUrl", normalizeBaseUrl());
+        els.settingsStatus.textContent = "Settings saved.";
+        loadAll();
+      }
+
+      function normalizeBaseUrl() {
+        return (els.serverBaseUrl.value || location.origin).replace(/\/+$/, "");
+      }
+
+      function headers(admin = false) {
+        return {
+          "content-type": "application/json",
+          ...(admin ? { authorization: `Bearer ${els.adminToken.value.trim()}` } : {})
+        };
+      }
+
+      async function api(path, options = {}) {
+        const response = await fetch(`${normalizeBaseUrl()}${path}`, {
+          method: options.method || "GET",
+          headers: headers(options.admin),
+          body: options.body ? JSON.stringify(options.body) : undefined
+        });
+        const data = await response.json().catch(() => ({ ok: false, error: "Invalid JSON response." }));
+        if (!response.ok || data.ok === false) {
+          throw new Error(data.error || `Request failed: ${response.status}`);
+        }
+        return data;
+      }
+
+      async function loadStatus() {
+        try {
+          state.status = await api("/api/status");
+          els.serverPill.textContent = `Online v${state.status.version}`;
+          els.serverPill.className = "pill online";
+        } catch (error) {
+          state.status = { ok: false, error: error.message };
+          els.serverPill.textContent = "Offline";
+          els.serverPill.className = "pill offline";
+        }
+      }
+
+      async function loadDiagnostics() {
+        try {
+          const data = await api("/api/diagnostics?limit=100", { admin: true });
+          state.diagnostics = data.diagnostics || [];
+        } catch {
+          state.diagnostics = [];
+        }
+      }
+
+      async function loadProposals() {
+        try {
+          const data = await api("/api/repair/proposals?limit=100", { admin: true });
+          state.proposals = data.proposals || [];
+        } catch {
+          state.proposals = [];
+        }
+      }
+
+      async function loadAdapterDetails() {
+        const entries = await Promise.all(
+          providers.map(async (provider) => {
+            try {
+              const data = await api(`/api/adapters/${provider}/latest`);
+              return [provider, data.adapter];
+            } catch (error) {
+              return [provider, { id: provider, error: error.message }];
+            }
+          })
+        );
+        state.adapterDetails = Object.fromEntries(entries);
+      }
+
+      async function testAdminAccess() {
+        try {
+          await api("/api/diagnostics?limit=1", { admin: true });
+          els.settingsStatus.textContent = "Admin token works.";
+        } catch (error) {
+          els.settingsStatus.textContent = error.message;
+        }
+      }
+
+      function render() {
+        document.querySelectorAll("[data-panel]").forEach((panel) => {
+          panel.classList.toggle("hidden", panel.dataset.panel !== state.activeView);
+        });
+        const titles = {
+          dashboard: ["Dashboard", "Operational status for the local ExportAI repair server."],
+          diagnostics: ["Diagnostics", "Private/debug reports uploaded from extension Manager."],
+          proposals: ["Repair proposals", "Review selector-only repair proposals before publishing."],
+          adapters: ["Adapters", "Inspect latest remote adapter releases and publish manual configs."],
+          license: ["License/API", "Validate license keys and inspect API examples."],
+          settings: ["Settings", "Local admin browser preferences."]
+        };
+        const [title, subtitle] = titles[state.activeView] || titles.dashboard;
+        els.viewTitle.textContent = title;
+        els.viewSubtitle.textContent = subtitle;
+
+        renderDashboard();
+        renderDiagnostics();
+        renderProposals();
+        renderAdapters();
+        renderLicense();
+        renderSettingsView();
+      }
+
+      function renderDashboard() {
+        const status = state.status || {};
+        const adapterCounts = status.adapterCounts || {};
+        const published = Object.values(adapterCounts).reduce((total, item) => total + (item.published || 0), 0);
+        document.querySelector("#dashboardView").innerHTML = `
+          <section class="grid">
+            ${metric("Server", status.ok ? "Online" : "Offline", status.ok ? `v${status.version}` : status.error || "Not connected")}
+            ${metric("Diagnostics", status.diagnosticsCount || 0, "Reports stored")}
+            ${metric("Proposals", status.proposalsCount || 0, "Repair queue")}
+            ${metric("Published", published, "Remote adapters")}
+          </section>
+          <section class="panel">
+            <h3>Provider health</h3>
+            <div class="list">
+              ${providers.map((provider) => renderProviderHealth(provider, adapterCounts[provider] || {})).join("")}
+            </div>
+          </section>
+        `;
+      }
+
+      function renderProviderHealth(provider, counts) {
+        const diagnostics = state.diagnostics.filter((item) => item.platform === provider).length;
+        const proposals = state.proposals.filter((item) => item.platform === provider).length;
+        return `<article class="card">
+          <div>
+            <h3>${escapeHtml(provider)}</h3>
+            <div class="meta">Latest: ${escapeHtml(counts.latestVersion || "none")} · Releases: ${escapeHtml(counts.releases || 0)}</div>
+            <div class="chips">
+              <span class="chip">${escapeHtml(diagnostics)} diagnostics</span>
+              <span class="chip">${escapeHtml(proposals)} proposals</span>
+              <span class="chip">${escapeHtml(counts.published || 0)} published</span>
+            </div>
+          </div>
+          <div><span class="badge ${diagnostics ? "failed" : counts.published ? "published" : ""}">${diagnostics ? "Needs review" : counts.published ? "Remote" : "Local only"}</span></div>
+        </article>`;
+      }
+
+      function renderDiagnostics() {
+        const view = document.querySelector("#diagnosticsView");
+        view.innerHTML = `
+          ${filterToolbar("diagnostics")}
+          <div class="list">
+            ${filteredDiagnostics().map(renderDiagnostic).join("") || `<div class="notice">No diagnostics match the current filter.</div>`}
+          </div>
+        `;
+        wireFilters(view);
+      }
+
+      function renderDiagnostic(record) {
+        const selectors = Object.entries(record.selectorResults || record.diagnostic?.selectorResults || {})
+          .slice(0, 8)
+          .map(([selector, count]) => `<span class="chip">${escapeHtml(selector)}: ${escapeHtml(count)}</span>`)
+          .join("");
+        return `<article class="card">
+          <div>
+            <h3>${escapeHtml(record.platform || "unknown")} · ${escapeHtml(record.errorType || "Diagnostic")}</h3>
+            <div class="meta">${escapeHtml(record.errorMessage || "")}</div>
+            <div class="meta">${escapeHtml(record.sourceUrl || "")}</div>
+            <div class="meta">Captured: ${escapeHtml(formatDate(record.capturedAt || record.receivedAt))} · Privacy: ${escapeHtml(record.privacyMode || "private")}</div>
+            <div class="chips">${selectors}</div>
+          </div>
+          <div class="actions">
+            <button type="button" data-json='${attrJson(record)}'>JSON</button>
+            <button type="button" data-repair-diagnostic="${escapeHtml(record.id || record.localDiagnosticId || "")}">Create proposal</button>
+          </div>
+        </article>`;
+      }
+
+      function renderProposals() {
+        const view = document.querySelector("#proposalsView");
+        view.innerHTML = `
+          ${filterToolbar("proposals")}
+          <div class="list">
+            ${filteredProposals().map(renderProposal).join("") || `<div class="notice">No repair proposals match the current filter.</div>`}
+          </div>
+        `;
+        wireFilters(view);
+        view.querySelectorAll("[data-approve]").forEach((button) => {
+          button.addEventListener("click", () => approveProposal(button.dataset.approve));
+        });
+        view.querySelectorAll("[data-reject]").forEach((button) => {
+          button.addEventListener("click", () => rejectProposal(button.dataset.reject));
+        });
+      }
+
+      function renderProposal(proposal) {
+        const selectors = (proposal.adapter?.selectors || []).map((selector) => `<span class="chip">${escapeHtml(selector)}</span>`).join("");
+        return `<article class="card">
+          <div>
+            <h3>${escapeHtml(proposal.platform)} repair</h3>
+            <div class="meta">${escapeHtml(proposal.reason || "")}</div>
+            <div class="meta">ID: ${escapeHtml(proposal.id)} · Confidence: ${escapeHtml(Math.round((proposal.confidence || 0) * 100))}% · Test: ${escapeHtml(proposal.testStatus || "not_run")}</div>
+            <div class="chips">${selectors || `<span class="chip">No adapter patch</span>`}</div>
+          </div>
+          <div>
+            <span class="badge ${escapeHtml(proposal.status || "proposed")}">${escapeHtml(proposal.status || "proposed")}</span>
+            <div class="actions">
+              <button type="button" data-json='${attrJson(proposal)}'>JSON</button>
+              <button type="button" data-approve="${escapeHtml(proposal.id)}" ${proposal.status === "published" || !proposal.adapter ? "disabled" : ""}>Approve</button>
+              <button class="danger" type="button" data-reject="${escapeHtml(proposal.id)}" ${proposal.status === "rejected" ? "disabled" : ""}>Reject</button>
+            </div>
+          </div>
+        </article>`;
+      }
+
+      function renderAdapters() {
+        const view = document.querySelector("#adaptersView");
+        view.innerHTML = `
+          <section class="split">
+            <div class="panel">
+              <h3>Latest adapter releases</h3>
+              <div class="list">${providers.map(renderAdapter).join("")}</div>
+            </div>
+            <div class="panel">
+              <h3>Manual publish</h3>
+              <label>
+                Platform
+                <select id="publishPlatform">${providers.map((provider) => `<option value="${provider}">${provider}</option>`).join("")}</select>
+              </label>
+              <label>
+                Adapter JSON
+                <textarea id="publishJson" spellcheck="false">{
+  "id": "chatgpt",
+  "version": "manual-1",
+  "selectors": ["[data-message-author-role]"],
+  "selectorGroups": [["[data-message-author-role]"]]
+}</textarea>
+              </label>
+              <label>
+                Changelog
+                <input id="publishChangelog" type="text" value="Manual admin publish." />
+              </label>
+              <div class="status-line">
+                <button id="publishButton" type="button">Publish adapter</button>
+                <span id="publishStatus" class="meta"></span>
+              </div>
+            </div>
+          </section>
+        `;
+        view.querySelector("#publishButton").addEventListener("click", publishAdapter);
+        view.querySelectorAll("[data-rollback]").forEach((button) => {
+          button.addEventListener("click", () => rollbackAdapter(button.dataset.rollback));
+        });
+      }
+
+      function renderAdapter(provider) {
+        const adapter = state.adapterDetails[provider] || {};
+        const selectors = (adapter.selectors || []).map((selector) => `<span class="chip">${escapeHtml(selector)}</span>`).join("");
+        return `<article class="card">
+          <div>
+            <h3>${escapeHtml(provider)}</h3>
+            <div class="meta">Version: ${escapeHtml(adapter.version || "none")} · Source: ${escapeHtml(adapter.source || "none")} · Status: ${escapeHtml(adapter.status || adapter.error || "local only")}</div>
+            <div class="chips">${selectors || `<span class="chip">No remote adapter</span>`}</div>
+          </div>
+          <div class="actions">
+            <button type="button" data-json='${attrJson(adapter)}'>JSON</button>
+            <button type="button" data-rollback="${escapeHtml(provider)}">Rollback</button>
+          </div>
+        </article>`;
+      }
+
+      function renderLicense() {
+        document.querySelector("#licenseView").innerHTML = `
+          <section class="split">
+            <div class="panel">
+              <h3>Validate license</h3>
+              <label>
+                License key
+                <input id="licenseKey" type="text" value="free-local-dev" />
+              </label>
+              <div class="status-line">
+                <button id="validateLicenseButton" type="button">Validate</button>
+                <span id="licenseStatus" class="meta"></span>
+              </div>
+              <pre id="licenseOutput">{}</pre>
+            </div>
+            <div class="panel">
+              <h3>Admin API examples</h3>
+              <pre>GET /api/status
+GET /api/diagnostics
+GET /api/repair/proposals
+POST /api/repair/proposals/:id/approve
+POST /api/repair/proposals/:id/reject
+POST /api/adapters/:platform
+POST /api/adapters/:platform/rollback</pre>
+            </div>
+          </section>
+        `;
+        document.querySelector("#validateLicenseButton").addEventListener("click", validateLicense);
+      }
+
+      function renderSettingsView() {
+        document.querySelector("#settingsView").innerHTML = `
+          <section class="panel">
+            <h3>Local browser settings</h3>
+            <p>These settings are stored in this browser only. They do not change server environment variables.</p>
+            <div class="split">
+              <label>
+                Admin token
+                <input type="text" value="${escapeHtml(els.adminToken.value)}" readonly />
+              </label>
+              <label>
+                Server base URL
+                <input type="text" value="${escapeHtml(normalizeBaseUrl())}" readonly />
+              </label>
+            </div>
+          </section>
+        `;
+      }
+
+      function filterToolbar(scope) {
+        return `<section class="toolbar">
+          <label>
+            Search
+            <input data-filter-search type="search" value="${escapeHtml(state.filter)}" placeholder="Search ${scope}..." />
+          </label>
+          <label>
+            Platform
+            <select data-filter-platform>
+              <option value="all">All providers</option>
+              ${providers.map((provider) => `<option value="${provider}" ${state.platform === provider ? "selected" : ""}>${provider}</option>`).join("")}
+            </select>
+          </label>
+          <label>
+            Count
+            <select disabled><option>${scope === "diagnostics" ? state.diagnostics.length : state.proposals.length} total</option></select>
+          </label>
+          <label>
+            Sort
+            <select disabled><option>Newest first</option></select>
+          </label>
+        </section>`;
+      }
+
+      function wireFilters(root) {
+        root.querySelector("[data-filter-search]")?.addEventListener("input", (event) => {
+          state.filter = event.currentTarget.value.trim().toLowerCase();
+          render();
+        });
+        root.querySelector("[data-filter-platform]")?.addEventListener("change", (event) => {
+          state.platform = event.currentTarget.value;
+          render();
+        });
+        root.querySelectorAll("[data-json]").forEach((button) => {
+          button.addEventListener("click", () => showJson(button.dataset.json));
+        });
+        root.querySelectorAll("[data-repair-diagnostic]").forEach((button) => {
+          button.addEventListener("click", () => createProposalFromStoredDiagnostic(button.dataset.repairDiagnostic));
+        });
+      }
+
+      function filteredDiagnostics() {
+        return state.diagnostics.filter((item) => itemMatches(item));
+      }
+
+      function filteredProposals() {
+        return state.proposals.filter((item) => itemMatches(item));
+      }
+
+      function itemMatches(item) {
+        const platformOk = state.platform === "all" || item.platform === state.platform;
+        const queryOk = !state.filter || JSON.stringify(item).toLowerCase().includes(state.filter);
+        return platformOk && queryOk;
+      }
+
+      async function createProposalFromStoredDiagnostic(id) {
+        const diagnostic = state.diagnostics.find((item) => item.id === id || item.localDiagnosticId === id);
+        if (!diagnostic) return alert("Diagnostic not found.");
+        try {
+          await api("/api/repair/proposals", { method: "POST", body: diagnostic });
+          await loadAll();
+          state.activeView = "proposals";
+          document.querySelectorAll("[data-view]").forEach((button) => button.classList.toggle("active", button.dataset.view === "proposals"));
+          render();
+        } catch (error) {
+          alert(error.message);
+        }
+      }
+
+      async function approveProposal(id) {
+        try {
+          await api(`/api/repair/proposals/${encodeURIComponent(id)}/approve`, { method: "POST", admin: true, body: {} });
+          await loadAll();
+        } catch (error) {
+          alert(error.message);
+        }
+      }
+
+      async function rejectProposal(id) {
+        try {
+          const reason = prompt("Reject reason", "Rejected from ExportAI Admin.") || "Rejected from ExportAI Admin.";
+          await api(`/api/repair/proposals/${encodeURIComponent(id)}/reject`, { method: "POST", admin: true, body: { reason } });
+          await loadAll();
+        } catch (error) {
+          alert(error.message);
+        }
+      }
+
+      async function publishAdapter() {
+        const status = document.querySelector("#publishStatus");
+        try {
+          const platform = document.querySelector("#publishPlatform").value;
+          const adapter = JSON.parse(document.querySelector("#publishJson").value);
+          const changelog = document.querySelector("#publishChangelog").value;
+          await api(`/api/adapters/${encodeURIComponent(platform)}`, {
+            method: "POST",
+            admin: true,
+            body: { adapter, changelog }
+          });
+          status.textContent = "Adapter published.";
+          await loadAll();
+        } catch (error) {
+          status.textContent = error.message;
+        }
+      }
+
+      async function rollbackAdapter(platform) {
+        try {
+          await api(`/api/adapters/${encodeURIComponent(platform)}/rollback`, { method: "POST", admin: true, body: {} });
+          await loadAll();
+        } catch (error) {
+          alert(error.message);
+        }
+      }
+
+      async function validateLicense() {
+        const output = document.querySelector("#licenseOutput");
+        const status = document.querySelector("#licenseStatus");
+        try {
+          const data = await api("/api/license/validate", {
+            method: "POST",
+            body: { licenseKey: document.querySelector("#licenseKey").value }
+          });
+          status.textContent = "License active.";
+          output.textContent = JSON.stringify(data, null, 2);
+        } catch (error) {
+          status.textContent = error.message;
+          output.textContent = "{}";
+        }
+      }
+
+      function showJson(encoded) {
+        const win = window.open("", "_blank", "noopener,noreferrer,width=900,height=700");
+        if (!win) return;
+        win.document.write(`<pre style="white-space:pre-wrap;font:12px ui-monospace,monospace">${escapeHtml(JSON.stringify(JSON.parse(encoded), null, 2))}</pre>`);
+        win.document.close();
+      }
+
+      function metric(label, value, detail) {
+        return `<article class="metric"><strong>${escapeHtml(value)}</strong><span>${escapeHtml(label)}</span><small>${escapeHtml(detail || "")}</small></article>`;
+      }
+
+      function formatDate(value) {
+        return value ? new Date(value).toLocaleString() : "unknown";
+      }
+
+      function attrJson(value) {
+        return escapeHtml(JSON.stringify(value || {}));
+      }
+
+      function escapeHtml(value) {
+        return String(value)
+          .replaceAll("&", "&amp;")
+          .replaceAll("<", "&lt;")
+          .replaceAll(">", "&gt;")
+          .replaceAll('"', "&quot;")
+          .replaceAll("'", "&#039;");
+      }
+    </script>
+  </body>
+</html>

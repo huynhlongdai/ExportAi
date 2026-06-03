@@ -9,6 +9,7 @@ const PORT = Number(process.env.EXPORTAI_PORT || 8787);
 const ADMIN_TOKEN = process.env.EXPORTAI_ADMIN_TOKEN || "dev-admin-token";
 const DATA_DIR = path.join(__dirname, "data");
 const STORE_FILE = path.join(DATA_DIR, "store.json");
+const ADMIN_HTML_FILE = path.join(__dirname, "admin.html");
 const SERVER_VERSION = "0.2.0";
 const STORE_SCHEMA_VERSION = 2;
 
@@ -51,6 +52,10 @@ const server = http.createServer(async (request, response) => {
 
     const url = new URL(request.url, `http://${request.headers.host}`);
     const body = await readJsonBody(request);
+
+    if (request.method === "GET" && (url.pathname === "/" || url.pathname === "/admin")) {
+      return handleAdminUi(response);
+    }
 
     if (request.method === "GET" && url.pathname === "/health") {
       return sendJson(response, 200, { ok: true, service: "exportai-server", time: new Date().toISOString() });
@@ -139,6 +144,15 @@ async function handleLicenseValidate(response, body) {
     quota: license.quota || { dailyLimit: 999999, monthlyLimit: 999999 },
     features: license.features || DEFAULT_STORE.licenses["free-local-dev"].features
   });
+}
+
+async function handleAdminUi(response) {
+  const html = await fs.readFile(ADMIN_HTML_FILE, "utf8");
+  response.writeHead(200, {
+    "content-type": "text/html; charset=utf-8",
+    "cache-control": "no-store"
+  });
+  return response.end(html);
 }
 
 async function handleStatus(response) {
