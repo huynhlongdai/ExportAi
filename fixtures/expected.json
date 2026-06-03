@@ -5,7 +5,9 @@
   },
   "grok": {
     "file": "fixtures/grok/basic.html",
-    "minimumSelectorMatches": 2
+    "minimumSelectorMatches": 2,
+    "requiredAdapterSelectors": ["[data-testid=\"conversation-turn\"]"],
+    "forbiddenAdapterSelectors": ["[class*=\"prose\"]", "main [dir=\"auto\"]"]
   },
   "gemini": {
     "file": "fixtures/gemini/basic.html",

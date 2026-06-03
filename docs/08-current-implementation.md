@@ -83,7 +83,7 @@
 - Link jobs are saved as `waiting_for_tab` with `triggerMode: url_match`.
 - When a supported ChatGPT/Grok/Gemini tab loads or becomes active and its URL matches the waiting job, background injects the content script and runs the export task.
 - Link jobs use the user's browser session; no server crawl or cookie/token collection is used.
-- Grok adapter was revised to version `2026.05.28.3`; `whitespace-pre-wrap` is no longer used as a message selector because it can match individual list items and split one response into many fake turns.
+- Grok adapter was revised to version `2026.06.03.1`; `whitespace-pre-wrap`, `[class*="prose"]`, and `main [dir="auto"]` are no longer used as message selectors because they can match headings, list items, or answer body fragments and split one response into many fake turns.
 - Grok extraction now normalizes tiny `li/p/span` candidates up to a likely message container and de-duplicates those containers before role inference.
 - Grok extraction now prunes nested/contained candidates so headings, links, and bullet fragments inside one answer are not exported as separate fake turns.
 - Gemini exports now clean plain text wrappers like `Bạn đã nói` / `You said` at the start of user messages.
@@ -113,7 +113,7 @@
 The code should continue to separate:
 
 - Core export/task/quota/signature logic.
-- Platform-specific adapter logic.
+- Platform-specific adapter logic and richer end-to-end fixture assertions for exported turn content.
 - UI surfaces: popup, floating modal, manager.
 
 This keeps the path open for:

@@ -39,6 +39,19 @@ for (const [platformId, spec] of Object.entries(expected)) {
   if (!Array.isArray(platform.selectorGroups) || !platform.selectorGroups.length) {
     failures.push({ platform: platformId, reason: "Missing selectorGroups." });
   }
+
+  const adapterSelectors = [...platform.selectors, ...(platform.selectorGroups || []).flat()];
+  for (const selector of spec.requiredAdapterSelectors || []) {
+    if (!adapterSelectors.includes(selector)) {
+      failures.push({ platform: platformId, reason: `Missing required adapter selector: ${selector}` });
+    }
+  }
+
+  for (const selector of spec.forbiddenAdapterSelectors || []) {
+    if (adapterSelectors.includes(selector)) {
+      failures.push({ platform: platformId, reason: `Forbidden adapter selector is still present: ${selector}` });
+    }
+  }
 }
 
 if (failures.length) {

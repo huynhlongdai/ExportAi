@@ -26,7 +26,7 @@
     grok: {
       id: "grok",
       name: "Grok",
-      adapterVersion: "2026.05.28.3",
+      adapterVersion: "2026.06.03.1",
       adapterStatus: "local",
       productName: "ExportAI for Grok",
       hosts: ["grok.com", "x.com"],
@@ -37,16 +37,13 @@
         '[data-testid*="message"]',
         '[data-testid*="response"]',
         '[class*="message"]',
-        '[class*="prose"]',
-        'main [dir="auto"]',
         "article"
       ],
       selectorGroups: [
         ['[data-testid="conversation-turn"]'],
         ['[data-testid="tweetText"]'],
         ['[data-testid*="message"]', '[data-testid*="response"]'],
-        ['[class*="prose"]'],
-        ['main [dir="auto"]'],
+        ['[class*="message"]'],
         ["article"]
       ],
       roleHints: {

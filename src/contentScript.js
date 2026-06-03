@@ -460,7 +460,7 @@ function pruneNestedCandidates(nodes, platform) {
   if (platform.id !== "grok") return nodes;
 
   const uniqueNodes = uniqueElements(nodes);
-  if (uniqueNodes.length < 3) return uniqueNodes;
+  if (uniqueNodes.length < 2) return uniqueNodes;
 
   const textByNode = new Map(
     uniqueNodes.map((node) => [node, cleanText(node.innerText || node.textContent || "")])
