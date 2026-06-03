@@ -1,11 +1,20 @@
 const taskListEl = document.querySelector("#taskList");
 const taskFiltersEl = document.querySelector("#taskFilters");
+const taskSearchPanelEl = document.querySelector("#taskSearchPanel");
+const taskSearchInputEl = document.querySelector("#taskSearchInput");
+const taskProviderFilterEl = document.querySelector("#taskProviderFilter");
+const taskFormatFilterEl = document.querySelector("#taskFormatFilter");
+const taskSortSelectEl = document.querySelector("#taskSortSelect");
 const planSummaryEl = document.querySelector("#planSummary");
 const refreshButton = document.querySelector("#refreshButton");
 const viewButtons = [...document.querySelectorAll("[data-view]")];
 const filterButtons = [...document.querySelectorAll("[data-filter]")];
 let activeView = "dashboard";
 let activeFilter = "all";
+let taskSearchQuery = "";
+let taskProviderFilter = "all";
+let taskFormatFilter = "all";
+let taskSort = "newest";
 let selectedDiagnosticId = null;
 let managerState = {
   tasks: [],
@@ -35,6 +44,22 @@ filterButtons.forEach((button) => {
     filterButtons.forEach((item) => item.classList.toggle("active", item === button));
     renderManager();
   });
+});
+taskSearchInputEl?.addEventListener("input", () => {
+  taskSearchQuery = taskSearchInputEl.value.trim().toLowerCase();
+  renderManager();
+});
+taskProviderFilterEl?.addEventListener("change", () => {
+  taskProviderFilter = taskProviderFilterEl.value;
+  renderManager();
+});
+taskFormatFilterEl?.addEventListener("change", () => {
+  taskFormatFilter = taskFormatFilterEl.value;
+  renderManager();
+});
+taskSortSelectEl?.addEventListener("change", () => {
+  taskSort = taskSortSelectEl.value;
+  renderManager();
 });
 
 taskListEl.addEventListener("click", async (event) => {
@@ -172,6 +197,7 @@ async function loadManager() {
 function renderManager() {
   renderPlanSummary();
   taskFiltersEl.hidden = activeView !== "tasks";
+  if (taskSearchPanelEl) taskSearchPanelEl.hidden = activeView !== "tasks";
 
   if (activeView === "dashboard") renderDashboard();
   if (activeView === "tasks") renderTasks();
@@ -641,19 +667,93 @@ function renderPlanSummary() {
 }
 
 function renderTasks() {
-  const visibleTasks =
-    activeFilter === "all"
-      ? managerState.tasks
-      : managerState.tasks.filter((task) => task.status === activeFilter);
-
+  renderTaskFilterOptions();
+  const allTasks = managerState.tasks || [];
+  const visibleTasks = getVisibleTasks(allTasks);
   const linkJobBox = renderLinkJobBox();
+  const summary = renderTaskFilterSummary(visibleTasks.length, allTasks.length);
 
   if (!visibleTasks.length) {
-    taskListEl.innerHTML = `${linkJobBox}<div class="empty">Chưa có task nào trong nhóm này.</div>`;
+    taskListEl.innerHTML = `${linkJobBox}${summary}<div class="empty">Không có task nào khớp bộ lọc hiện tại.</div>`;
     return;
   }
 
-  taskListEl.innerHTML = `${linkJobBox}${visibleTasks.map(renderTask).join("")}`;
+  taskListEl.innerHTML = `${linkJobBox}${summary}${visibleTasks.map(renderTask).join("")}`;
+}
+
+function renderTaskFilterOptions() {
+  if (!taskProviderFilterEl || !taskFormatFilterEl || !taskSortSelectEl) return;
+
+  const providers = uniqueValues(
+    (managerState.tasks || []).map((task) => task.platform || task.platformName).filter(Boolean)
+  );
+  const formats = uniqueValues(
+    (managerState.tasks || []).flatMap((task) => task.formats || []).filter(Boolean)
+  );
+
+  taskProviderFilterEl.innerHTML = [
+    `<option value="all">All providers</option>`,
+    ...providers.map((provider) => `<option value="${escapeHtml(provider)}">${escapeHtml(provider)}</option>`)
+  ].join("");
+  taskProviderFilterEl.value = providers.includes(taskProviderFilter) ? taskProviderFilter : "all";
+  taskProviderFilter = taskProviderFilterEl.value;
+
+  taskFormatFilterEl.innerHTML = [
+    `<option value="all">All formats</option>`,
+    ...formats.map((format) => `<option value="${escapeHtml(format)}">${escapeHtml(format.toUpperCase())}</option>`)
+  ].join("");
+  taskFormatFilterEl.value = formats.includes(taskFormatFilter) ? taskFormatFilter : "all";
+  taskFormatFilter = taskFormatFilterEl.value;
+  taskSortSelectEl.value = taskSort;
+}
+
+function getVisibleTasks(tasks) {
+  const query = taskSearchQuery;
+  return tasks
+    .filter((task) => activeFilter === "all" || task.status === activeFilter)
+    .filter((task) => taskProviderFilter === "all" || task.platform === taskProviderFilter || task.platformName === taskProviderFilter)
+    .filter((task) => taskFormatFilter === "all" || (task.formats || []).includes(taskFormatFilter))
+    .filter((task) => !query || taskMatchesSearch(task, query))
+    .sort(sortTasks);
+}
+
+function taskMatchesSearch(task, query) {
+  const haystack = [
+    task.title,
+    task.platform,
+    task.platformName,
+    task.status,
+    task.sourceUrl,
+    task.matchUrl,
+    task.presetId,
+    task.error,
+    ...(task.formats || [])
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+  return haystack.includes(query);
+}
+
+function sortTasks(left, right) {
+  if (taskSort === "oldest") return dateValue(left.createdAt) - dateValue(right.createdAt);
+  if (taskSort === "title") return String(left.title || "").localeCompare(String(right.title || ""));
+  if (taskSort === "provider") return String(left.platformName || left.platform || "").localeCompare(String(right.platformName || right.platform || ""));
+  return dateValue(right.createdAt) - dateValue(left.createdAt);
+}
+
+function renderTaskFilterSummary(visibleCount, totalCount) {
+  const chips = [
+    activeFilter !== "all" ? `Status: ${activeFilter}` : null,
+    taskProviderFilter !== "all" ? `Provider: ${taskProviderFilter}` : null,
+    taskFormatFilter !== "all" ? `Format: ${taskFormatFilter.toUpperCase()}` : null,
+    taskSearchQuery ? `Search: ${taskSearchQuery}` : null
+  ].filter(Boolean);
+
+  return `<article class="filter-summary">
+    <strong>${escapeHtml(visibleCount)} of ${escapeHtml(totalCount)} tasks</strong>
+    <div>${chips.length ? chips.map((chip) => `<span>${escapeHtml(chip)}</span>`).join("") : "<span>All tasks</span>"}</div>
+  </article>`;
 }
 
 function renderLinkJobBox() {
@@ -823,6 +923,17 @@ function renderPlan() {
       </div>
     </div>
   </article>`;
+}
+
+function uniqueValues(values) {
+  return [...new Set(values.map((value) => String(value)).filter(Boolean))].sort((left, right) =>
+    left.localeCompare(right)
+  );
+}
+
+function dateValue(value) {
+  const time = new Date(value || 0).getTime();
+  return Number.isFinite(time) ? time : 0;
 }
 
 function escapeHtml(value) {

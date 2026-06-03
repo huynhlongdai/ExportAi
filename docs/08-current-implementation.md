@@ -34,6 +34,7 @@
 - Export formats currently implemented: Markdown, JSON, PDF, PNG, TXT, CSV, TSV, JSONL, HTML, Word-compatible DOC.
 - Markdown/HTML/Word rendering preserves heading hierarchy, lists, blockquotes, tables, code fences, links, images, and assets where available.
 - Manager page with task list, filters, Run/Retry, Delete.
+- Manager Tasks includes status filters, full-text search, provider/format filters, sort controls, and a visible result summary.
 - Manager Dashboard is implemented with export counts, archive counts, failures, waiting jobs, adapter health, server status, and recent failures.
 - Manager Diagnostics includes detail JSON, upload, repair, and delete actions.
 - Manager Adapters shows diagnostic health and can request server rollback for a provider adapter.

@@ -39,8 +39,38 @@
         <section id="taskFilters" class="tabs compact" aria-label="Task filters">
           <button class="active" data-filter="all" type="button">All</button>
           <button data-filter="running" type="button">Running</button>
+          <button data-filter="queued" type="button">Queued</button>
+          <button data-filter="waiting_for_tab" type="button">Waiting</button>
           <button data-filter="success" type="button">Success</button>
           <button data-filter="failed" type="button">Failed</button>
+        </section>
+
+        <section id="taskSearchPanel" class="filter-panel" aria-label="Task search and filters" hidden>
+          <label class="filter-field search-field">
+            <span>Search</span>
+            <input id="taskSearchInput" type="search" placeholder="Title, provider, URL, format, preset, error..." />
+          </label>
+          <label class="filter-field">
+            <span>Provider</span>
+            <select id="taskProviderFilter">
+              <option value="all">All providers</option>
+            </select>
+          </label>
+          <label class="filter-field">
+            <span>Format</span>
+            <select id="taskFormatFilter">
+              <option value="all">All formats</option>
+            </select>
+          </label>
+          <label class="filter-field">
+            <span>Sort</span>
+            <select id="taskSortSelect">
+              <option value="newest">Newest first</option>
+              <option value="oldest">Oldest first</option>
+              <option value="title">Title A-Z</option>
+              <option value="provider">Provider A-Z</option>
+            </select>
+          </label>
         </section>
 
         <section id="taskList" class="task-list" aria-live="polite"></section>
